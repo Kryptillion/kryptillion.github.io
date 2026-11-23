@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://kryptillion.github.io/sitemap.xml

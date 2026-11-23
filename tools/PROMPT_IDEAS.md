@@ -1,0 +1,149 @@
+# Prompt ideas
+
+Titles only, no answers. Before using one, check it isn't already in the `used` history (the build refuses a repeat), then build its answer list from at least two sources as tools/TIERING.md describes. Favor prompts with big answer pools and rosters fans haven't memorized. Small-pool ideas (a single team's lineup, a handful of movies) work better merged into a bigger prompt.
+
+- Name a member of the X-Men (any era, comics or screen)
+- Name a Batman villain
+- Name a Spider-Man villain
+- Name a Viltrumite (comics or show)
+- Name a member of the Justice League in the comics (any era)
+- Name a Marvel Cinematic Universe movie
+- Name a symbiote
+- Name a member of the Green Lantern Corps
+- Name a member of the Avengers (any era, comics or screen)
+- Name a member of The Seven (comics or show)
+- Name a Daredevil villain (comics or screen)
+- Name a Flash villain (comics or screen)
+- Name an actor who has played Batman in live action
+- Name a member of the Guardians of the Galaxy (any lineup)
+- Name a Fantastic Four villain
+- Name a Superman villain
+- Name a live-action DC movie (any era)
+- Name a member of the Guardians of the Globe (any lineup)
+- Name a member of the Bat-family (Robins, Batgirls and allies)
+- Name a fictional place in the Marvel Universe
+- Name a member of the Teen Titans (any era, comics or screen)
+- Name a Gen V character
+- Name a Wonder Woman villain
+- Name an Inhuman (comics or screen)
+- Name a Marvel movie not made by Marvel Studios
+- Name a Doctor Strange villain
+- Name a Thor villain
+- Name a member of the Legion of Super-Heroes
+- Name an Invincible villain (comics or show)
+- Name a member of the Sinister Six (any lineup, comics or screen)
+- Name a member of the Suicide Squad (any version, comics or screen)
+- Name an actor who has played or voiced the Joker
+- Name a Hulk villain
+- Name a member of the Justice Society of America
+- Name a Wolverine villain (comics or screen)
+- Name a member of Payback (comics or show)
+- Name a Marvel cosmic being (abstract entities, Celestials, Elders of the Universe)
+- Name a New God or Fourth World character
+- Name an actor who has played Superman in live action
+- Name a member of the Thunderbolts (comics or screen)
+- Name a member of the Defenders (any lineup, comics or screen)
+- Name a DC speedster
+- Name an actor from Invincible's voice cast
+- Name a member of the New Mutants (comics or film)
+- Name a Kryptonian
+- Name a live-action DC TV series
+- Name a member of the Masters of Evil (any lineup)
+- Name a Kree or Skrull character
+- Name a member of the Doom Patrol (comics or screen)
+- Name an actor from The Boys TV series
+- Name a Marvel weapon or magical artifact
+- Name a magic user in DC Comics
+- Name a Marvel animated TV series
+- Name someone who has been a Spider-Man or other spider-powered hero
+- Name a fictional place in DC Comics
+- Name a member of the Young Avengers (comics or screen)
+- Name an alien in Invincible who isn't a Viltrumite (character or species)
+- Name a member of Alpha Flight
+- Name a Watchmen character (comic, film or HBO series)
+- Name a Marvel or DC video game
+- Name a member of the Hellfire Club (any circle, comics or screen)
+- Name a member of the Brotherhood of Mutants (any lineup, comics or screen)
+- Name a character from The Sandman (comics or show)
+- Name a supe from The Boys TV series
+- Name a villain from the 2003 Teen Titans cartoon
+- Name an Asgardian (comics or screen)
+- Name an actor who played a villain in an MCU movie
+- Name an agent of S.H.I.E.L.D. (comics or screen)
+- Name an Aquaman character (ally or villain)
+- Name a Runaways character (the kids or their parents)
+- Name a hero from Invincible (comics or show)
+- Name someone who has been Captain America (comics or screen)
+- Name a member of the Shazam family or a Shazam villain
+- Name a DC animated TV series
+- Name a Black Panther or Wakanda character
+- Name a Marvel villain team or organization
+- Name a member of a Lantern Corps that isn't green
+- Name a character from The Boys who isn't a supe (comics or show)
+- Name a member of the Gotham City Police Department (comics or screen)
+- Name a Spider-Man supporting character who isn't a villain
+- Name a live-action Marvel TV series
+- Name a Marvel animal or pet character
+- Name a DC villain team or organization
+- Name a member of the Fantastic Four or Future Foundation (any lineup)
+- Name an Eternal (comics or screen)
+- Name a movie based on Marvel or DC comics that won an Oscar
+- Name a Batman vehicle or gadget
+- Name an actor who has played or voiced Spider-Man (any version)
+- Name a version of the Hulk or a member of the Hulk family
+- Name a member of the Justice League in Justice League Unlimited (the cartoon)
+- Name a member of the New Warriors
+- Name a member of The Boys team (comics or show)
+- Name someone who has been a Ghost Rider
+- Name an alien race in DC Comics
+- Name a writer or artist who has worked on Batman comics
+- Name a Punisher character (ally or enemy, comics or screen)
+- Name a Marvel horror or supernatural character
+- Name a Green Lantern villain
+- Name a member of X-Force (any lineup, comics or film)
+- Name a Superman supporting character who isn't a villain
+- Name a Marvel or DC crossover event comic
+- Name a Morlock
+- Name a member of the Grayson family in Invincible (comics or show)
+- Name a member of Justice League Dark (comics or animation)
+- Name a member of the Champions (any version)
+- Name a Marvel character with \
+- Name a villain from Batman: The Animated Series (including The New Batman Adventures)
+- Name an actor who has played both a Marvel and a DC character in live action
+- Name someone who has wielded Mjolnir (comics or screen)
+- Name a supe from The Boys comics
+- Name an X-Men villain
+- Name a Green Arrow villain (comics or Arrow)
+- Name an Avengers villain
+- Name a character from the Harley Quinn animated series (2019)
+- Name an actor from Christopher Nolan's Dark Knight trilogy
+- Name someone who has used the title Captain Marvel or Ms. Marvel
+- Name a comic series created or co-created by Robert Kirkman
+- Name a Luke Cage, Iron Fist or Heroes for Hire character
+- Name an Amazon of Themyscira (comics or screen)
+- Name a Marvel speedster
+- Name a character from Young Justice (the animated series)
+- Name a writer or artist who has worked on Spider-Man comics
+- Name a Deadpool character (ally or enemy, comics or film)
+- Name a Batman Beyond character
+- Name a member of the Outsiders (any lineup)
+- Name a Marvel telepath
+- Name a Moon Knight character (comics or screen)
+- Name an actor from the Fox X-Men film series (including Deadpool)
+- Name a Marvel sorcerer or magic user
+- Name a Teen Titans villain from the comics
+- Name a Herald of Galactus
+- Name a DC horror or supernatural character
+- Name a member of X-Factor (any version)
+- Name a Marvel character with a healing factor
+- Name a character from the Gotham TV series
+- Name a composer who scored a Marvel or DC movie
+- Name a member of HYDRA (comics or screen)
+- Name a character from the Batman: Arkham games
+- Name a character co-created by Stan Lee
+- Name someone who has been Iron Man or worn Iron Man armor
+- Name someone who has been Robin (any continuity)
+- Name a villain from Marvel's Netflix shows
+- Name a Batman villain who debuted on screen or in a game rather than in the comics
+- Name a Marvel (Timely) hero from the 1940s Golden Age
+- Name a member of the Legion of Doom

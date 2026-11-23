@@ -1,0 +1,6 @@
+src/days/
+drafts/
+_head.html
+_script.html
+node_modules/
+.DS_Store
