@@ -439,7 +439,7 @@ body{overflow-x:clip}
   <button class="ghost close" data-close>Close</button>
   <h2>Your collection</h2>
   <div class="stats" id="statGrid"></div>
-  <h2 style="font-size:24px">This week's issues</h2>
+  <h2 style="font-size:24px">Your recent issues</h2>
   <ul class="arch" id="archList"></ul>
   <p class="fine" id="bankInfo"></p>
 </div></dialog>
@@ -717,25 +717,33 @@ function home(){
   if(saved&&set){ showResults(todayIdx,set,saved.results,false); return; }
   if(!set){
     screen.innerHTML=`<div class="card in"><p class="lede">Today's issue is still at the printer.</p>
-      <p class="franchises">New prompts haven't landed yet. Check back soon, or play an earlier issue from this week.</p>
-      <button class="cta" id="goArch">Earlier issues</button></div>`;
-    $("#goArch").addEventListener("click",openStats);
+      <p class="franchises">New prompts haven't landed yet. Check back soon.</p></div>`;
     return;
   }
+  const prog=store.get(KEY+"prog:"+todayIdx,null);
+  const doneN=prog?Math.min(PER_DAY,prog.results.length):0;
   screen.innerHTML=`<div class="card in"><p class="lede">Seven superhero prompts. Any right answer scores, but the rarer it is, the more it's worth.</p>
     <p class="franchises">Marvel, DC, Invincible and The Boys. Comics, shows, movies and games all count.</p>
-    <div class="row"><button class="cta" id="go">Open today's issue</button>
+    <div class="row"><button class="cta" id="go">${prog?`Continue today's issue (${doneN} of ${PER_DAY} done)`:"Open today's issue"}</button>
     <button class="ghost" id="how">How to play</button></div>
     <p class="note">25 seconds per prompt. Keep guessing until an answer sticks. Your score locks in for the day.</p></div>`;
-  $("#go").addEventListener("click",()=>start(todayIdx,false));
+  $("#go").addEventListener("click",()=>start(todayIdx));
   $("#how").addEventListener("click",()=>$("#dlgHelp").showModal());
   if(!store.get(KEY+"seenHelp",false)){store.set(KEY+"seenHelp",true);$("#dlgHelp").showModal()}
 }
 
-function start(idx,archive){
+/* Only today's issue can be played. Progress is saved after every step, so a refresh resumes
+   where you were (with the same clock) instead of giving you a do-over. */
+function saveProg(){ store.set(KEY+"prog:"+G.idx,{i:G.i,results:G.results,endAt:G.endAtEpoch}); }
+function start(idx){
+  if(idx!==todayIdx) return;
   const set=daySet(idx); if(!set) return;
-  G={idx,set,i:0,results:[],archive,phase:"ask"};
+  if(store.get(KEY+"day:"+idx,null)) return home();
+  const prog=store.get(KEY+"prog:"+idx,null);
+  G={idx,set,i:prog?prog.i:0,results:prog?prog.results.slice():[],archive:false,phase:"ask",endAtEpoch:prog?prog.endAt:null};
+  if(G.results.length>G.i){ G.i=G.results.length; G.endAtEpoch=null; }
   setIssue(idx); showProg(true); resetWorld();
+  if(G.i>=PER_DAY) return finish();
   ask();
 }
 
@@ -768,7 +776,7 @@ function ask(){
   screen.className="stage";
   renderProg(G.i,false); setScore(sumPts(G.i),false);
   screen.innerHTML=`<div class="card in">
-    <div class="meta"><span>Prompt ${G.i+1} of ${PER_DAY}${G.archive?" (earlier issue)":""}</span></div>
+    <div class="meta"><span>Prompt ${G.i+1} of ${PER_DAY}</span></div>
     <h2 class="prompt">${esc(P.prompt)}</h2>
     <div class="timer" id="timer"><i id="bar"></i></div>
     <form class="answer" id="form" autocomplete="off">
@@ -782,6 +790,7 @@ function ask(){
   $("#form").addEventListener("submit",e=>{e.preventDefault();submit(inp.value,false)});
   inp.addEventListener("input",()=>{ if(G.pending&&inp.value!==G.pending){G.pending=null;setFlash("","")} });
   inp.focus();
+  if(!G.endAtEpoch){ G.endAtEpoch=Date.now()+SECONDS*1000; saveProg(); }
   startTimer();
 }
 
@@ -793,7 +802,7 @@ function setFlash(text,kind){
 
 function startTimer(){
   stopTimer();
-  G.endAt=performance.now()+SECONDS*1000; G.lastTick=null;
+  G.endAt=performance.now()+Math.min(SECONDS*1000,(G.endAtEpoch||Date.now()+SECONDS*1000)-Date.now()); G.lastTick=null;
   const bar=$("#bar"),wrap=$("#timer");
   const tick=()=>{
     const left=Math.max(0,G.endAt-performance.now());
@@ -813,6 +822,7 @@ function lockIn(P,ans,timedOut,lastInput){
   const res={input:(lastInput||"").trim(),tier:T.key,pts:T.pts,display:ans?ans.display:null,timedOut:!ans,guesses:G.tried.length};
   if(ans) SND.lock(); else SND.timeout();
   G.results.push(res);
+  G.endAtEpoch=null; saveProg();
   reveal(P,res);
 }
 
@@ -1434,7 +1444,8 @@ function finish(){
   const score=G.results.reduce((s,r)=>s+r.pts,0);
   const key=KEY+"day:"+G.idx;
   if(!store.get(key,null)){
-    store.set(key,{results:G.results,score,archive:G.archive});
+    store.set(key,{results:G.results,score,archive:false});
+    store.set(KEY+"prog:"+G.idx,null);
     const st=store.get(KEY+"stats",{played:0,total:0,best:0,streak:0,maxStreak:0,lastIdx:null,ones:0});
     st.played++; st.total+=score; st.best=Math.max(st.best,score);
     st.ones+=G.results.filter(r=>r.tier==="g").length;
@@ -1469,8 +1480,6 @@ function showResults(idx,set,results,archive){
       return `<li><span class="q">${esc(P.prompt)}</span><span class="tier ${T.cls}">${T.name} +${T.pts}</span>${esc(r.display||"No answer")}</li>`}).join("")}</ul>
     <div class="row">
       <button class="cta" id="share">Share score</button>
-      <button class="ghost" id="arch">Earlier issues</button>
-      ${idx!==todayIdx?`<button class="ghost" id="today">Today's issue</button>`:""}
     </div>
     <div class="flash ok" id="flash" role="status"></div>
     ${idx===todayIdx?`<p class="next" id="countdown"></p>`:""}</div>`;
@@ -1484,8 +1493,6 @@ function showResults(idx,set,results,archive){
       ta.remove();
     }
   });
-  $("#arch").addEventListener("click",openStats);
-  if($("#today")) $("#today").addEventListener("click",home);
   if(idx===todayIdx) countdown();
 }
 
@@ -1512,20 +1519,14 @@ function openStats(){
     <div><b>${st.played?Math.round(st.total/st.played):0}</b><span>Average</span></div>
     <div><b>${live}</b><span>Streak</span></div>
     <div><b>${st.ones}</b><span>1 in Kryptillion hits</span></div>`;
-  const items=loadedIdx.filter(i=>i<=todayIdx).reverse().map(i=>{
+  const items=[];
+  for(let i=todayIdx;i>=Math.max(0,todayIdx-13);i--){
     const sv=store.get(KEY+"day:"+i,null);
-    return `<li><span>No. ${i+1}, ${fmtDate(dateForIdx(i))}${i===todayIdx?" (today)":""}</span>
-      <button class="ghost" data-day="${i}">${sv?`${sv.score} pts, review`:"Play"}</button></li>`;
-  });
-  $("#archList").innerHTML=items.join("")||"<li>No issues yet.</li>";
-  $("#archList").querySelectorAll("[data-day]").forEach(b=>b.addEventListener("click",()=>{
-    const i=Number(b.dataset.day); $("#dlgStats").close();
-    const sv=store.get(KEY+"day:"+i,null), set=daySet(i);
-    if(sv) showResults(i,set,sv.results,sv.archive);
-    else start(i,i!==todayIdx);
-  }));
-  const lastI=loadedIdx.length?loadedIdx[loadedIdx.length-1]:null;
-  $("#bankInfo").textContent=lastI===null?"No issues loaded.":`Issues are loaded through ${fmtDate(dateForIdx(lastI))}.`;
+    if(!sv&&i!==todayIdx) continue;
+    items.push(`<li><span>No. ${i+1}, ${fmtDate(dateForIdx(i))}${i===todayIdx?" (today)":""}</span><span>${sv?`${sv.score} pts`:"Not finished yet"}</span></li>`);
+  }
+  $("#archList").innerHTML=items.join("")||"<li>No issues played yet.</li>";
+  $("#bankInfo").textContent="Each issue can only be played on its own day.";
   $("#dlgStats").showModal();
 }
 
