@@ -302,10 +302,22 @@ button{cursor:pointer}
 .tear,.boom,.shard,.impact,.flashb,.whoosh{position:absolute;pointer-events:none}
 /* iPhones (Safari's engine) can draw a rip under the panels while the camera moves unless it has its own layer.
    A permanent layer keeps it on top of the panels the whole time. */
-.tear{z-index:4;transition:opacity .45s;will-change:transform;-webkit-transform:translateZ(0);transform:translateZ(0);contain:layout paint}
-.tear>svg,.tear .op{position:absolute;inset:0}
-.tear .op{transform-origin:50% 1.2%;will-change:transform}
-.tear .op svg{display:block;width:100%;height:100%;overflow:visible}
+.tear{z-index:4;transition:opacity .45s}
+.tear .rev,.tear .sw,.tear .st,.tear>svg{position:absolute}
+.tear>svg{left:0;top:0;width:100%;height:100%;overflow:visible}
+.tear .rev{inset:0;opacity:0;overflow:hidden}
+.tear.open .rev{opacity:1}
+.tear .rev img,.tear .st img{position:absolute;max-width:none;display:block;user-select:none;-webkit-user-drag:none}
+.tear .sw{will-change:transform}
+.tear .st{inset:0;overflow:hidden}
+.tear .st .bd{position:absolute;left:0;right:0;background:var(--ink)}
+.tear .st .fe{position:absolute;inset:0}
+.tear .st .fold{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(8,10,28,.32),rgba(8,10,28,0) 35%,rgba(255,250,235,0) 70%,rgba(255,250,235,.12))}
+.tear .sh,.tear .fe,.tear .st .fold,.tear .fr,.tear .un{opacity:0;transition:opacity .15s}
+.tear.open .sh,.tear.open .fe,.tear.open .st .fold,.tear.open .fr,.tear.open .un{opacity:1}
+.tear .sw.hang{animation:sway 2.8s ease-in-out infinite alternate}
+.tear .sw.hang:nth-child(even){animation-duration:2.3s;animation-direction:alternate-reverse}
+@keyframes sway{from{rotate:-1.6deg}to{rotate:1.6deg}}
 .tear.fade{opacity:0}
 .tear svg,.boom svg,.impact svg,.shard svg{display:block;width:100%;height:100%;overflow:visible}
 .impact{z-index:6;animation:impact .5s ease-out forwards}
@@ -971,94 +983,6 @@ function burstSVG(word,foil){
 }
 /* ---------- Paper tears. Each break rips the page: a ragged hole with a white torn edge,
    paper flaps peeled back, creases around it, and tape strips ready for the trip back up. ---------- */
-/* A long vertical rip that runs from the panel above, through the gutter, into the panel below.
-   Torn white fibres along both edges, flaps of paper peeled back on each side, creases running off
-   the two points, and four strips of tape for the trip back up. Drawing units below. */
-const TW=240, TH=360, TCX=120, TCY=130, TY0=14, TY1=TH-14;   /* TCY sits on the gutter between panels */
-let tearN=0;
-function tearSVG(seed){
-  const r=mulberry(seed), id="t"+(++tearN), N=40;
-  const WMAX=60+r()*8, PEAK=.44+r()*.06, ph=r()*6.28;
-  const f=pts=>pts.map(([x,y])=>x.toFixed(1)+","+y.toFixed(1)).join(" ");
-  const env=s=>Math.max(0,s<PEAK?Math.sin(Math.PI/2*s/PEAK):Math.cos(Math.PI/2*(s-PEAK)/(1-PEAK)));
-  const L=[],R=[],RL=[],RR=[],SL=[],SR=[],C=[],HW=[];
-  let cw=0,jl=0,jr=0,fl=8,fr=8;
-  for(let k=0;k<=N;k++){
-    const s=k/N, y=TY0+(TY1-TY0)*s, e=env(s), ed=Math.min(1,e*4);
-    const hw=WMAX*Math.pow(e,.8)*(1+.1*Math.sin(s*9+ph));
-    cw=cw*.8+(r()-.5)*5; const cx=TCX+Math.sin(s*4.2+ph)*8+cw*ed;
-    jl=jl*.5+(r()-.5)*6; jr=jr*.5+(r()-.5)*6;
-    const xl=cx-hw+jl*ed, xr=cx+hw+jr*ed;
-    L.push([xl,y]); R.push([xr,y]); C.push([cx,y]); HW.push(hw);
-    fl=fl*.55+(4+r()*11)*.45; fr=fr*.55+(4+r()*11)*.45;
-    const fade=Math.min(1,e*2.5+.3);
-    RL.push([xl-fl*fade-(k%3===0?r()*4:0),y+(r()-.5)*3]); RR.push([xr+fr*fade+(k%3===0?r()*4:0),y+(r()-.5)*3]);
-    SL.push([xl-2.6,y]); SR.push([xr+2.6,y]);
-  }
-  const tip0=[C[0][0],TY0-10], tip1=[C[N][0],TY1+10];
-  const hole=[...L,...R.slice().reverse()], rim=[tip0,...RL,tip1,...RR.slice().reverse()], shade=[...SL,...SR.slice().reverse()];
-  /* creases running off both points and out from the edges */
-  let creases="";
-  const crease=(a,b,m)=>{const d=`M${a[0].toFixed(1)} ${a[1].toFixed(1)} Q${m[0].toFixed(1)} ${m[1].toFixed(1)} ${b[0].toFixed(1)} ${b[1].toFixed(1)}`;
-    return `<path d="${d}" stroke="#fffdf4" stroke-width="2.4" transform="translate(1.4 1)"/><path d="${d}" stroke="${INK}" stroke-width="1.2" opacity=".55"/>`;};
-  for(const [p,dir] of [[tip0,-1],[tip1,1]]) for(let k=0;k<3;k++){
-    const ang=(k-1)*.5+(r()-.5)*.3, len=18+r()*26;
-    const b=[p[0]+Math.sin(ang)*len,p[1]+dir*Math.cos(ang)*len], m=[(p[0]+b[0])/2+(r()-.5)*8,(p[1]+b[1])/2];
-    creases+=crease(p,b,m);
-  }
-  for(let k=0;k<2;k++){
-    const left=k%2===0, i=Math.round(N*(.25+r()*.5)), p=(left?RL:RR)[i], len=14+r()*20, sgn=left?-1:1;
-    creases+=crease(p,[p[0]+sgn*len,p[1]+(r()-.3)*14],[p[0]+sgn*len*.5,p[1]+(r()-.5)*8]);
-  }
-  /* a flap of paper peeled back off an edge, hinged along that edge */
-  const flap=(edge,k,sgn,Lf,inside)=>{
-    const h1=edge[Math.max(0,k-4)], h2=edge[Math.min(N,k+4)];
-    const mx=(h1[0]+h2[0])/2, my=(h1[1]+h2[1])/2, ux0=h2[0]-h1[0], uy0=h2[1]-h1[1], hl=Math.hypot(ux0,uy0)/2;
-    const ux=ux0/(2*hl), uy=uy0/(2*hl);
-    let nx=sgn, ny=inside?.9:.3; const nn=Math.hypot(nx,ny); nx/=nn; ny/=nn;
-    const j=()=>(r()-.5)*5;
-    const pts=[[-hl,0],[-hl*.95+j(),Lf*.24],[-hl*.72+j(),Lf*.52],[-hl*.34+j(),Lf*.82],[j()*.6,Lf],[hl*.36+j(),Lf*.76],[hl*.78+j(),Lf*.46],[hl*.96+j(),Lf*.2],[hl,0]];
-    const ser=[]; pts.forEach((q,i)=>{ser.push(q); if(i>0&&i<pts.length-1){const n=pts[i+1]; ser.push([(q[0]+n[0])/2+(r()-.5)*3.5,(q[1]+n[1])/2+(r()-.5)*3.5]);}});
-    return `<g transform="matrix(${ux.toFixed(3)} ${uy.toFixed(3)} ${nx.toFixed(3)} ${ny.toFixed(3)} ${mx.toFixed(1)} ${my.toFixed(1)})"><g class="flp" data-y="${my.toFixed(0)}" style="transform-box:fill-box;transform-origin:50% 0%">
-      ${inside?"":`<polygon points="${f(ser.map(([x,y])=>[x+2,y+6]))}" fill="#080a1c" opacity=".4"/>`}
-      <polygon points="${f(ser)}" fill="url(#${id}${inside?"fi":"fo"})" stroke="${INK}" stroke-width="2" stroke-linejoin="round"/>
-      <path d="M${(-hl*.85).toFixed(1)} ${(Lf*.13).toFixed(1)} Q0 ${(Lf*.2).toFixed(1)} ${(hl*.85).toFixed(1)} ${(Lf*.11).toFixed(1)}" fill="none" stroke="#fff" stroke-width="1.4" opacity=".75"/>
-      <path d="M${-hl} 0 L${hl} 0" stroke="${INK}" stroke-width="1.8"/></g></g>`;
-  };
-  const flaps=flap(RL,Math.round(N*(.3+r()*.05)),-1,30+r()*14)+flap(RL,Math.round(N*(.52+r()*.05)),-1,40+r()*16)+flap(RL,Math.round(N*(.72+r()*.04)),-1,26+r()*12)
-    +flap(RR,Math.round(N*(.38+r()*.05)),1,36+r()*16)+flap(RR,Math.round(N*(.62+r()*.05)),1,32+r()*14);
-  const inner=flap(L,Math.round(N*.24),1,44+r()*12,true);
-  /* the seam left once the rip is pushed shut, and four strips of tape across it, bottom first */
-  const seam=C.filter((_,k)=>k%3===0).map(([x,y],k)=>[x+(k%2?1:-1)*(1.5+r()*3.5),y]);
-  const seamD="M"+seam.map(([x,y])=>x.toFixed(1)+" "+y.toFixed(1)).join(" L");
-  const strip=(k,rot)=>{
-    const [cx,cy]=C[k], len=2*HW[k]+48+r()*16, hs=24+r()*6, Lh=len/2, teeth=5, right=[], left=[];
-    for(let i=0;i<=teeth*2;i++){const y=-hs/2+hs*i/(teeth*2); right.push([Lh-(i%2?4.5:0),y]); left.push([-Lh+(i%2?4.5:0),hs/2-hs*i/(teeth*2)]);}
-    const pts=f([...right,...left]);
-    return `<g transform="translate(${cx.toFixed(1)} ${cy.toFixed(1)}) rotate(${rot.toFixed(1)})"><g class="tp" style="transform-box:fill-box;transform-origin:0% 50%;transform:scale(0,1)">
-      <polygon points="${pts}" fill="#000" opacity=".16" transform="translate(2 3)"/>
-      <polygon points="${pts}" fill="#f7edc4" fill-opacity=".86" stroke="${INK}" stroke-width="1.4" stroke-opacity=".85" stroke-linejoin="round"/>
-      <path d="M${(-Lh*.82).toFixed(1)} ${(-hs/2+5).toFixed(1)} L${(Lh*.82).toFixed(1)} ${(-hs/2+5).toFixed(1)}" stroke="#fff" stroke-width="2.6" opacity=".6" stroke-linecap="round"/>
-      <path d="M${(-Lh*.7).toFixed(1)} ${(hs*.12).toFixed(1)} L${(Lh*.6).toFixed(1)} ${(hs*.12).toFixed(1)}" stroke="#d9cb94" stroke-width="1.2" opacity=".7"/></g></g>`;
-  };
-  const tapes=[.78,.56,.34].map((q,i)=>strip(Math.round(N*q),(i%2?-1:1)*(4+r()*8))).join("");
-  return `<svg viewBox="0 0 ${TW} ${TH}" aria-hidden="true"><defs>
-    <linearGradient id="${id}h" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#1d2142"/><stop offset=".35" stop-color="#05060f"/><stop offset=".65" stop-color="#05060f"/><stop offset="1" stop-color="#1d2142"/></linearGradient>
-    <linearGradient id="${id}fo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a99d7c"/><stop offset=".28" stop-color="#ddd4ba"/><stop offset="1" stop-color="#fbf7e8"/></linearGradient>
-    <linearGradient id="${id}fi" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8f876f"/><stop offset=".45" stop-color="#c9c0a5"/><stop offset="1" stop-color="#ddd5bc"/></linearGradient>
-    <clipPath id="${id}c"><polygon points="${f(hole)}"/></clipPath></defs>
-    <g class="wr" fill="none" stroke-linecap="round">${creases}</g></svg>
-    <div class="op"><svg viewBox="0 0 ${TW} ${TH}" aria-hidden="true"><g class="open">
-      <polygon points="${f(rim)}" fill="#fffdf4" stroke="${INK}" stroke-width="1.5" stroke-linejoin="round"/>
-      <polygon points="${f(shade)}" fill="#ddd4bb"/>
-      <polygon points="${f(hole)}" fill="url(#${id}h)" stroke="${INK}" stroke-width="1.3" stroke-linejoin="round"/>
-      <g clip-path="url(#${id}c)">${inner}</g>
-    </g></svg></div>
-    <svg viewBox="0 0 ${TW} ${TH}" aria-hidden="true"><g class="flaps">${flaps}</g>
-    <g class="seam" style="opacity:0" fill="none" stroke-linejoin="round" stroke-linecap="round"><path d="${seamD}" stroke="#fffdf4" stroke-width="3.2" transform="translate(1.6 0)"/><path d="${seamD}" stroke="${INK}" stroke-width="2"/></g>
-    <g class="tapes">${tapes}</g></svg>`;
-}
-
 /* ---------- Era panels. One drawn picture per era, with small moving pieces laid on top.
    Each picture keeps its own shape and is sized to cover its panel on any screen, so the
    moving pieces can be placed in the picture's own percentages. ---------- */
@@ -1147,33 +1071,119 @@ function clearMarks(){
   reel.querySelectorAll(".tear,.boom,.shard,.impact,.flashb,.whoosh").forEach(n=>n.remove());
   reel.querySelectorAll(".era").forEach(e=>e.classList.remove("here","hit"));
 }
-function gutterY(g,i){const p=g.eras[i-1]; return Math.round((p.offsetTop+p.offsetHeight+g.eras[i].offsetTop)/2);}
+/* ---------- Panel breaks. The hero punches down through the bottom edge of a panel: a ragged bite
+   tears out of that panel's bottom, its paper strips bend down and hang over the panel below, and the
+   next panel shows through the gap. On the way back up the strips swing back into place and get taped.
+   Everything is drawn in the break's own pixels; "local" coordinates start at the break's top left. ---------- */
+const PTOP={s:"#14141b",a:"#17a8e6",t:"#332754",b:"#1d171e",c:"#22a9ce",d:"#f8bc09",g:"#fefdf9"};   /* each panel's sky colour at its very top */
+let tearN=0;
+function relRect(el){const r=el.getBoundingClientRect(), q=reel.getBoundingClientRect(); return {x:r.left-q.left,y:r.top-q.top,w:r.width,h:r.height};}
+const eraKey=e=>(e.className.match(/\be-(\w)\b/)||[])[1];
 function addTear(g,i,hidden){
-  const w=Math.round(g.hw*2.45), h=Math.round(w*TH/TW), gy=gutterY(g,i);
-  const t=document.createElement("div"); t.className="tear"; t.dataset.y=gy;
-  t.innerHTML=tearSVG(((G?G.idx*7+G.i:0)+1)*7919+i*104729);
-  Object.assign(t.style,{width:w+"px",height:h+"px",left:Math.round(g.X-w*TCX/TW)+"px",top:Math.round(gy-h*TCY/TH)+"px"});
+  const r=mulberry(((G?G.idx*7+G.i:0)+1)*7919+i*104729), id="t"+(++tearN);
+  const up=g.eras[i-1], lo=g.eras[i];
+  const gTop=up.offsetTop+up.offsetHeight, gBot=lo.offsetTop;
+  const W=Math.round(g.hw*2.7), D=Math.round(g.hw*1.05), X0=Math.round(g.X-W/2), Y0=gTop-D, H=gBot+6-Y0;
+  const f=pts=>pts.map(([x,y])=>x.toFixed(1)+" "+y.toFixed(1)).join(",");
+  const fs=pts=>pts.map(([x,y])=>x.toFixed(1)+","+y.toFixed(1)).join(" ");
+  const half=W*.46, cx=W/2, xu=u=>cx+u*half;
+  /* the torn top edge of the bite: deepest in the middle, meeting the panel's bottom edge at both sides */
+  const NA=30; let jg=0; const jag=[];
+  for(let k=0;k<=NA;k++){ jg=jg*.55+(r()-.5)*D*.12; jag.push(jg); }
+  const archY=u=>{const k=Math.min(NA,Math.max(0,Math.round((u+1)/2*NA))); const end=1-Math.abs(u);
+    return Math.min(D,D*(.07+.93*Math.pow(Math.abs(u),1.7))+jag[k]*Math.min(1,end*4));};
+  const arch=[]; for(let k=0;k<=NA;k++){const u=-1+2*k/NA; arch.push([xu(u),archY(u)]);}
+  /* five strips of paper, split by torn lines that run from the bite's edge down to the panel edge */
+  const bu=[-1,-.58+(r()-.5)*.1,-.19+(r()-.5)*.1,.2+(r()-.5)*.1,.58+(r()-.5)*.1,1];
+  const bline=bu.map((u,k)=>{ if(k===0||k===5) return [[xu(u),D]];
+    const y0=archY(u), n=Math.max(3,Math.round((D-y0)/7)), pts=[];
+    for(let j=0;j<=n;j++){const y=y0+(D-y0)*j/n; pts.push([xu(u)+(j===0?0:(r()-.5)*6),y]);} return pts; });
+  const arcBetween=(u0,u1)=>{const pts=[[xu(u0),archY(u0)]]; for(let k=0;k<=NA;k++){const u=-1+2*k/NA; if(u>u0&&u<u1) pts.push([xu(u),archY(u)]);} pts.push([xu(u1),archY(u1)]); return pts;};
+  /* what shows through the gap: the next panel, continuing upward (its sky colour where its picture runs out) */
+  const loA=relRect(lo.querySelector(".art")), upA=relRect(up.querySelector(".art"));
+  const gx0=xu(-1), gx1=xu(1);
+  const revPoly=[...arch,[gx1+(r()-.5)*4,(D+H)/2],[gx1+(r()-.5)*5,H],[gx0+(r()-.5)*5,H],[gx0+(r()-.5)*4,(D+H)/2]];
+  const loKey=eraKey(lo), upKey=eraKey(up), loImg=lo.querySelector(".pic").getAttribute("src"), upImg=up.querySelector(".pic").getAttribute("src");
+  const img=(src,a,ox,oy)=>`<img src="${src}" alt="" draggable="false" style="left:${(a.x-ox).toFixed(1)}px;top:${(a.y-oy).toFixed(1)}px;width:${a.w.toFixed(1)}px;height:${a.h.toFixed(1)}px">`;
+  let strips="";
+  const mid=2;
+  for(let k=0;k<5;k++){
+    const um=(bu[k]+bu[k+1])/2, hyG=archY(um);
+    /* strips 1 and 3 tore across part way down; the rest still carry the panel's clean bottom edge */
+    const torn=k===1||k===3, yb=torn?D-(D-hyG)*(.2+r()*.18):D;
+    const cut=l=>l.filter(([x,y])=>y<yb-2);
+    const top=arcBetween(bu[k],bu[k+1]);
+    const right=k+1===5?[]:cut(bline[k+1]).slice(1), left=k===0?[]:cut(bline[k]).slice(1).reverse();
+    const xr=k+1===5?xu(1):(right.length?right[right.length-1][0]:xu(bu[k+1])), xl=k===0?xu(-1):(left.length?left[0][0]:xu(bu[k]));
+    let bottom=[[xr,yb],[xl,yb]];
+    if(torn){ bottom=[]; const n=6; for(let j=0;j<=n;j++) bottom.push([xr+(xl-xr)*j/n,yb+(j===0||j===n?0:(r()-.5)*9)]); }
+    const poly=[...top,...right,...bottom,...left];
+    const xs=poly.map(p=>p[0]), ys=poly.map(p=>p[1]);
+    const sx=Math.floor(Math.min(...xs))-1, sy=Math.floor(Math.min(...ys))-1, sw=Math.ceil(Math.max(...xs))+1-sx, sh=Math.ceil(Math.max(...ys))+1-sy;
+    const loc=poly.map(([x,y])=>[x-sx,y-sy]);
+    const hx=xu(um)-sx, hy=hyG-sy;
+    const side=k-mid, ext=D*(torn?.3+r()*.2:(.72-.12*Math.abs(side)+(r()-.5)*.25));
+    const sc=Math.min(2.4,(sh-hy+ext)/(sh-hy)), th=-side*(6.5+r()*3.5)+(side===0?(r()-.5)*5:0);
+    let curl="";
+    if(!torn&&r()<.8){ const left0=r()<.5, w=Math.min(sw*.55,D*.35), cxp=left0?xl-sx:xr-sx, cyp=D-sy, dir=left0?1:-1, h=w*(.8+r()*.4);
+      curl=`<polygon points="${fs([[cxp,cyp],[cxp+dir*w,cyp],[cxp,cyp-h]])}" fill="#05060f" opacity=".35" transform="translate(${dir*2} -2)"/><polygon points="${fs([[cxp+dir*w,cyp],[cxp,cyp-h],[cxp+dir*w*.55,cyp-h*.5]])}" fill="#efe5c8" stroke="${INK}" stroke-width="1.6" stroke-linejoin="round"/><path d="M${(cxp+dir*w*.85).toFixed(1)} ${(cyp-h*.1).toFixed(1)} L${(cxp+dir*w*.2).toFixed(1)} ${(cyp-h*.8).toFixed(1)}" stroke="#fff" stroke-width="1.2" opacity=".7"/>`; }
+    const hang=`rotate(${th.toFixed(1)}deg) scale(${(1-.04*Math.abs(side)).toFixed(3)},${sc.toFixed(3)})`;
+    const bulge=`rotate(${(th*.15).toFixed(1)}deg) scale(1,${(1+(sc-1)*.12).toFixed(3)})`;
+    const edges=[k>0?cut(bline[k]):null,k<4?cut(bline[k+1]):null,torn?bottom:null].filter(l=>l&&l.length>1).map(l=>{const pl=fs(l.map(([x,y])=>[x-sx,y-sy]));
+      return `<polyline points="${pl}" fill="none" stroke="#fffdf4" stroke-width="6" stroke-linejoin="round"/><polyline points="${pl}" fill="none" stroke="${INK}" stroke-width="2.2" stroke-linejoin="round"/>`;}).join("");
+    strips+=`<div class="sw" data-hang="${hang}" data-bulge="${bulge}" data-d="${Math.abs(side)}" style="left:${sx}px;top:${sy}px;width:${sw}px;height:${sh}px;transform-origin:${hx.toFixed(1)}px ${hy.toFixed(1)}px">
+      <svg class="sh" viewBox="0 0 ${sw} ${sh}" aria-hidden="true"><polygon points="${fs(loc.map(([x,y])=>[x+3,y+6]))}" fill="#05060f" opacity=".38"/></svg>
+      <div class="st" style="clip-path:polygon(${loc.map(([x,y])=>x.toFixed(1)+"px "+y.toFixed(1)+"px").join(",")})">${img(upImg,upA,X0+sx,Y0+sy)}${torn?"":`<i class="bd" style="top:${(D-sy-4).toFixed(1)}px;height:4px"></i>`}<i class="fold"></i><svg class="fe" viewBox="0 0 ${sw} ${sh}" aria-hidden="true">${edges}${curl}</svg></div></div>`;
+  }
+  /* the torn paper edge round the bite, creases running up from it, and the shadow it throws into the gap */
+  const lip=[]; for(let k=0;k<=NA;k++){const [x,y]=arch[k]; const end=Math.min(1,(Math.min(k,NA-k))/3); lip.push([x+(r()-.5)*2,y-(2.5+r()*6)*end]);}
+  const fringe=`<polygon points="${fs([...arch,...lip.slice().reverse()])}" fill="#fffdf4" stroke="${INK}" stroke-width="1.4" stroke-linejoin="round"/>`;
+  let creases="";
+  for(let k=0;k<5;k++){const a=arch[2+Math.floor(r()*(NA-4))], len=8+r()*D*.25, dx=(a[0]-cx)*.25+(r()-.5)*10;
+    const d=`M${a[0].toFixed(1)} ${(a[1]-5).toFixed(1)} Q${(a[0]+dx*.5).toFixed(1)} ${(a[1]-5-len*.6).toFixed(1)} ${(a[0]+dx).toFixed(1)} ${(a[1]-5-len).toFixed(1)}`;
+    creases+=`<path d="${d}" stroke="#fffdf4" stroke-width="2.2" fill="none" transform="translate(1.2 1)"/><path d="${d}" stroke="${INK}" stroke-width="1.1" fill="none" opacity=".55"/>`;}
+  const shadow=`<polygon points="${fs([...arch,...arch.slice().reverse().map(([x,y])=>[x,Math.min(H,y+D*.22)])])}" fill="#05060f" opacity=".32"/><polygon points="${fs([...arch,...arch.slice().reverse().map(([x,y])=>[x,Math.min(H,y+D*.1)])])}" fill="#05060f" opacity=".3"/>`;
+  /* once taped: the torn lines that are left, and three strips of tape across the bite */
+  const seamD=[arch,...bline.slice(1,5)].map(l=>"M"+l.map(([x,y])=>x.toFixed(1)+" "+y.toFixed(1)).join(" L")).join(" ");
+  const tape=(u,len,hs,rot)=>{const x=xu(u), y=archY(u)+D*.12, Lh=len/2, right=[], left=[], teeth=4;
+    for(let j=0;j<=teeth*2;j++){const yy=-hs/2+hs*j/(teeth*2); right.push([Lh-(j%2?3.5:0),yy]); left.push([-Lh+(j%2?3.5:0),hs/2-hs*j/(teeth*2)]);}
+    const pts=fs([...right,...left]);
+    return `<g transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${rot.toFixed(1)})"><g class="tp" style="transform-box:fill-box;transform-origin:0% 50%;transform:scale(0,1)">
+      <polygon points="${pts}" fill="#000" opacity=".16" transform="translate(2 3)"/>
+      <polygon points="${pts}" fill="#f7edc4" fill-opacity=".88" stroke="${INK}" stroke-width="1.2" stroke-opacity=".85" stroke-linejoin="round"/>
+      <path d="M${(-Lh*.8).toFixed(1)} ${(-hs/2+4).toFixed(1)} L${(Lh*.8).toFixed(1)} ${(-hs/2+4).toFixed(1)}" stroke="#fff" stroke-width="2.2" opacity=".6" stroke-linecap="round"/></g></g>`;};
+  const tl=D*1.05, tw=Math.max(14,D*.26);
+  const tapes=tape(-.55,tl*.85,tw,72+r()*10)+tape(.02,tl,tw,88+(r()-.5)*10)+tape(.56,tl*.85,tw,98+r()*10);
+  const t=document.createElement("div"); t.className="tear"; t.dataset.y=gTop;
+  Object.assign(t.style,{left:X0+"px",top:Y0+"px",width:W+"px",height:H+"px"});
+  t.innerHTML=`<div class="rev" style="background:${PTOP[loKey]||"#fff"};clip-path:polygon(${revPoly.map(([x,y])=>x.toFixed(1)+"px "+y.toFixed(1)+"px").join(",")})">${img(loImg,loA,X0,Y0)}</div>
+    <svg class="un" viewBox="0 0 ${W} ${H}" aria-hidden="true">${shadow}</svg>
+    ${strips}
+    <svg class="ovl" viewBox="0 0 ${W} ${H}" aria-hidden="true"><g class="fr">${fringe}<g fill="none" stroke-linecap="round">${creases}</g></g>
+      <g class="seam" style="opacity:0" fill="none" stroke-linejoin="round" stroke-linecap="round"><path d="${seamD}" stroke="#fffdf4" stroke-width="3" transform="translate(1.4 0)"/><path d="${seamD}" stroke="${INK}" stroke-width="1.8"/></g>
+      <g class="tapes">${tapes}</g></svg>`;
   if(hidden) t.style.visibility="hidden";
-  reel.appendChild(t); return t;
+  reel.appendChild(t);
+  if(!hidden){ t.classList.add("open"); t.querySelectorAll(".sw").forEach(s=>{s.style.transform=s.dataset.hang; s.classList.add("hang");}); }
+  return t;
 }
-/* The rip runs downward with the hero: it starts as a thin slit where his fists first hit the page,
-   follows him down to the gutter, then bursts open the rest of the way into the next panel. */
+/* the paper bows down under his fists just before it gives way */
 function startRip(t,ms){
   if(!t.isConnected||t.dataset.rip) return; t.dataset.rip="1";
-  t.style.visibility=""; t.querySelector(".flaps").style.visibility="hidden"; t.querySelector(".wr").style.opacity="0";
-  const g1=(TCY-TY0)/(TY1-TY0)+.04;
-  t._rip=t.querySelector(".op").animate([{transform:"scale(.16,.02)"},{transform:`scale(.42,${g1.toFixed(3)})`}],{duration:Math.max(60,ms),easing:"cubic-bezier(.5,0,1,1)",fill:"forwards"});
-  t._from=`scale(.42,${g1.toFixed(3)})`;
+  t.style.visibility="";
+  t._bulge=[...t.querySelectorAll(".sw")].map(s=>s.animate([{transform:"none"},{transform:s.dataset.bulge}],{duration:Math.max(60,ms),easing:"cubic-bezier(.5,0,1,1)",fill:"forwards"}));
 }
+/* it tears: the strips swing down over the next panel, centre first, and the next panel shows through */
 function openTear(t){
-  if(!t.dataset.rip) t._from="scale(.16,.06)";
-  t.dataset.rip="1"; t.style.visibility="";
-  const op=t.querySelector(".op"), from=t._from||"scale(.42,.45)";
-  op.animate([{transform:from},{transform:"scale(1.1,1.03)",offset:.55},{transform:"scale(1,1)"}],{duration:300,easing:"cubic-bezier(.2,.9,.3,1)"});
-  if(t._rip){ t._rip.cancel(); t._rip=null; }
-  const fl=t.querySelector(".flaps"); fl.style.visibility="";
-  [...fl.querySelectorAll(".flp")].sort((a,b)=>a.dataset.y-b.dataset.y).forEach((f,k)=>f.animate([{transform:"scaleY(0)"},{transform:"scaleY(1.16)",offset:.7},{transform:"scaleY(1)"}],{duration:300,delay:40+k*40,easing:"cubic-bezier(.2,.9,.3,1)",fill:"backwards"}));
-  const wr=t.querySelector(".wr"); wr.style.opacity=""; wr.animate([{opacity:0},{opacity:1}],{duration:220,delay:120,fill:"backwards"});
+  t.dataset.rip="1"; t.style.visibility=""; t.classList.add("open");
+  t.querySelector(".rev").animate([{opacity:0},{opacity:1}],{duration:60,fill:"backwards"});
+  t.querySelectorAll(".sw").forEach(s=>{
+    const from=s.dataset.bulge, to=s.dataset.hang, over=to.replace(/rotate\((-?[\d.]+)deg\)/,(m,a)=>`rotate(${(a*1.25).toFixed(1)}deg)`).replace(/,([\d.]+)\)$/,(m,b)=>`,${(b*1.08).toFixed(3)})`);
+    const a=s.animate([{transform:t._bulge?from:"none"},{transform:over,offset:.6},{transform:to}],{duration:360,delay:s.dataset.d*35,easing:"cubic-bezier(.2,.8,.3,1)",fill:"both"});
+    a.finished.then(()=>{ s.style.transform=to; a.cancel(); s.classList.add("hang"); },()=>{});
+  });
+  (t._bulge||[]).forEach(a=>a.cancel()); t._bulge=null;
+  t.querySelector(".fr").animate([{opacity:0},{opacity:1}],{duration:160});
 }
 /* While the camera moves, panels sliding into view stay still until it stops, so phones only move pictures instead of redrawing them */
 function setMoving(on){
@@ -1181,16 +1191,19 @@ function setMoving(on){
   /* keep every panel's motion running while the hero falls or climbs past it */
   if(on) reel.querySelectorAll(".era").forEach(e=>e.classList.add("live")); else refreshLive();
 }
-/* Fold the flaps back, close the rip to a seam, and tape it shut */
+/* Swing the strips back up into place, close the gap, and tape the torn lines shut */
 function tapeUp(t){
   if(!t.isConnected||t.dataset.taped) return; t.dataset.taped="1";
   const o={fill:"forwards"};
-  t.querySelectorAll(".flaps .flp").forEach(f=>f.animate([{transform:"scaleY(1)"},{transform:"scaleY(0)"}],{duration:110,easing:"ease-in",...o}));
-  t.querySelector(".op").animate([{transform:"scale(1,1)",opacity:1},{transform:"scale(.05,.94)",opacity:0}],{duration:160,delay:30,easing:"cubic-bezier(.5,0,.8,.6)",...o});
-  t.querySelector(".seam").animate([{opacity:0},{opacity:1}],{duration:90,delay:110,...o});
+  t.querySelectorAll(".sw").forEach(s=>{ const from=s.style.transform||s.dataset.hang; s.classList.remove("hang");
+    s.animate([{transform:from},{transform:"none"}],{duration:170,easing:"cubic-bezier(.5,0,.7,1)",...o}); });
+  t.classList.remove("open");
+  t.querySelector(".rev").animate([{opacity:1},{opacity:0}],{duration:90,delay:110,...o});
+  t.querySelector(".fr").animate([{opacity:1},{opacity:0}],{duration:90,delay:110,...o});
+  t.querySelector(".seam").animate([{opacity:0},{opacity:1}],{duration:90,delay:150,...o});
   t.querySelectorAll(".tp").forEach((f,k)=>{
-    f.animate([{transform:"scale(0,1)"},{transform:"scale(1.04,1.2)",offset:.72},{transform:"scale(1,1)"}],{duration:170,delay:120+k*75,easing:"cubic-bezier(.2,.8,.3,1)",...o});
-    setTimeout(()=>SND.tape(k),120+k*75);
+    f.animate([{transform:"scale(0,1)"},{transform:"scale(1.04,1.2)",offset:.72},{transform:"scale(1,1)"}],{duration:170,delay:190+k*75,easing:"cubic-bezier(.2,.8,.3,1)",...o});
+    setTimeout(()=>SND.tape(k),190+k*75);
   });
 }
 const IMPACT_SVG=(()=>{let l="";for(let k=0;k<16;k++){const a=k*Math.PI/8+(k%2?0.12:0), r0=k%2?36:30, r1=k%2?52:58;
@@ -1279,7 +1292,7 @@ async function dive(d){
     const dur=Math.max(460,Math.min(820,(toY-y)*1.0))*Math.max(0.82,1-(i-1)*0.05);
     const tr=tears[i-1]||(tears[i-1]=addTear(g,i,true));
     /* start the rip when his fists reach its top point, and let it run down with him */
-    const ripTop=tr.offsetTop+tr.offsetHeight*TY0/TH, total=dur*sp();
+    const ripTop=tr.offsetTop, total=dur*sp();
     const v=(ripTop-(y+g.hh))/(toY-y), at=v<=0?0:v>=1?1:bezier(.5,0,1,1).timeFor(v);
     const rt=setTimeout(()=>startRip(tr,(1-at)*total),at*total);
     await seg(toY,follow(toY),dur,"cubic-bezier(.5,0,1,1)");
@@ -1319,7 +1332,7 @@ async function rise(){
   const a1=hero.animate([{transform:heroT(g,y0)},{transform:heroT(g,y1)}],{duration:dur,easing:ease,fill:"forwards"});
   const a2=reel.animate([{transform:`translateY(${-WS.cam}px)`},{transform:"translateY(0)"}],{duration:dur,easing:ease,fill:"forwards"});
   /* tape each rip once the hero's feet have cleared it */
-  const timers=tears.map(t=>{const v=(y0-(t.offsetTop+t.offsetHeight*TY0/TH-g.hh*0.85))/(y0-y1);
+  const timers=tears.map(t=>{const v=(y0-(t.offsetTop-g.hh*0.85))/(y0-y1);
     return setTimeout(()=>tapeUp(t),v<=0?0:v>=1?dur:E.timeFor(v)*dur);});
   try{ await Promise.all([a1.finished,a2.finished]); }catch(e){}
   a1.cancel(); a2.cancel();
