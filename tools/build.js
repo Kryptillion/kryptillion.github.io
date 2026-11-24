@@ -14,6 +14,8 @@ const fs = require("fs"), path = require("path");
 const root = path.join(__dirname, "..");
 const TIERS = ["a","t","b","c","d","g"];
 const PER_DAY = 7;
+const MIN_ANSWERS = 100;              // every prompt needs at least this many answers (entries, not aliases)
+const MIN_ANSWERS_FROM = "2026-12-02"; // issues before this date were published under the old, softer rule
 const PACK_KEY = "kryptillion-pull-list";
 
 const args = process.argv.slice(2);
@@ -92,7 +94,10 @@ for (const [date, prompts] of Object.entries(days).sort()) {
       }
     }
     total += n;
-    if (n < 40) console.log(`note small answer pool (${n})`, tag);
+    if (n < MIN_ANSWERS) {
+      if (date >= MIN_ANSWERS_FROM) { console.log(`ERROR only ${n} answers, needs at least ${MIN_ANSWERS}`, tag); errors++; }
+      else console.log(`note small answer pool (${n})`, tag);
+    }
   });
 }
 if (errors) { console.log(`\n${errors} errors. questions.js not written.`); process.exit(1); }

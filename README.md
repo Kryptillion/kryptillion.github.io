@@ -29,7 +29,7 @@ A weekly scheduled task writes the coming week's issues. To do it by hand:
 
 1. `node tools/build.js --unpack` writes the live issues to `src/days/` so you can read or fix them. That folder is git-ignored, so plain-text answers never reach the public repo.
 2. Add a file `src/days/YYYY-MM-DD.js` per day, seven prompts each, following `tools/TIERING.md`. `tools/PROMPT_IDEAS.md` has a list of prompt ideas.
-3. `node tools/build.js --from YYYY-MM-DD` validates everything, drops days before that date, and rewrites `questions.js`. It refuses to build if a prompt was already published, if a prompt doesn't have exactly one 1 in Kryptillion answer, or if two answers share a name.
+3. `node tools/build.js --from YYYY-MM-DD` validates everything, drops days before that date, and rewrites `questions.js`. It refuses to build if a prompt was already published, if a prompt has fewer than 100 answers, if a prompt doesn't have exactly one 1 in Kryptillion answer, or if two answers share a name.
 4. Commit `questions.js` and push. GitHub Pages updates within a minute or two.
 
 ## Credits
