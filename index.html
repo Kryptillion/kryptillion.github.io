@@ -223,17 +223,49 @@ button{cursor:pointer}
   content:"";position:absolute;inset:0;pointer-events:none;opacity:.7;mix-blend-mode:multiply;z-index:0;
   background:linear-gradient(115deg,#ffd400,#ff7ac6,#7fe0ff,#b9ff9e,#ffd400);background-size:300% 300%;animation:foil 3.5s linear infinite;
 }
-/* Hero: one drawing. Upright to hover and fly up, flipped head-first for the dive. */
+/* Hero: a body layer over a cape layer, with glowing K and eyes. Upright to hover and fly up,
+   flipped head-first for the dive. The cape billows from the shoulders. */
 .hero{position:absolute;left:0;top:0;width:var(--hw);height:var(--hh);z-index:6;pointer-events:none;will-change:transform}
 .hero .bob{position:relative;width:100%;height:100%}
-.hero.hovering .bob{animation:bob 2.2s ease-in-out infinite}
-.hero .hs{position:absolute;left:50%;top:50%;height:112%;width:auto;max-width:none;transform:translate(-50%,-50%);transition:transform .34s cubic-bezier(.3,1.45,.5,1);user-select:none;-webkit-user-drag:none}
-.hero:not(.up) .hs{transform:translate(-50%,-50%) rotate(180deg)}
-@keyframes bob{0%,100%{transform:translateY(0) rotate(-1.5deg)}50%{transform:translateY(-8px) rotate(1.5deg)}}
-.aura{position:absolute;left:50%;bottom:calc(var(--hw) * -0.28);width:calc(var(--hw) * 1.25);height:calc(var(--hw) * 0.42);transform:translateX(-50%);opacity:0;transition:opacity .3s}
+.hero.hovering .bob{animation:bob 2.4s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-10px) rotate(2deg)}}
+.hero .fig{position:absolute;left:50%;top:50%;height:114%;aspect-ratio:560/590;transform:translate(-50%,-50%);transition:transform .34s cubic-bezier(.3,1.45,.5,1)}
+.hero:not(.up) .fig{transform:translate(-50%,-50%) rotate(180deg)}
+.hero .wob{position:absolute;inset:0;transform-origin:50% 55%}
+.hero .l{position:absolute;inset:0;width:100%;height:100%;display:block;user-select:none;-webkit-user-drag:none}
+.hero .cape{transform-origin:50% 27%}
+.hero .kg,.hero .eg{opacity:.3}
+.hero.hovering .wob{animation:breathe 2.4s ease-in-out infinite}
+@keyframes breathe{0%,100%{transform:scale(1,1)}50%{transform:scale(1.02,1.035)}}
+.hero.hovering .cape{animation:capeIdle 2.8s ease-in-out infinite}
+@keyframes capeIdle{0%,100%{transform:skewX(0deg) scale(1,1)}25%{transform:skewX(4deg) scale(1.04,1.02)}50%{transform:skewX(0deg) scale(1.08,.98)}75%{transform:skewX(-4deg) scale(1.04,1.02)}}
+.hero.hovering .kg{animation:glowk 2.4s ease-in-out infinite}
+.hero.hovering .eg{animation:glowk 3.2s ease-in-out infinite .7s}
+@keyframes glowk{0%,100%{opacity:.25}50%{opacity:1}}
+.hero.falling .wob,.hero.rising .wob{animation:wobble .34s ease-in-out infinite alternate}
+@keyframes wobble{from{transform:rotate(-5deg) scale(.95,1.08)}to{transform:rotate(5deg) scale(.95,1.08)}}
+.hero.falling .cape,.hero.rising .cape{animation:capeFlap .18s ease-in-out infinite alternate}
+@keyframes capeFlap{from{transform:skewX(-8deg) scale(.95,1.06)}to{transform:skewX(8deg) scale(1.06,1.14)}}
+.hero.falling .kg,.hero.rising .kg,.hero.falling .eg,.hero.rising .eg{opacity:.95}
+/* speed lines trail behind the hero while he dives or climbs */
+.hero .trail{position:absolute;left:8%;right:8%;height:150%;opacity:0;transition:opacity .15s}
+.hero.falling .trail{bottom:70%;opacity:1}
+.hero.rising .trail{top:70%;opacity:1}
+.trail i{position:absolute;top:0;width:3px;border-radius:3px;background:#fff;box-shadow:0 0 0 1.5px var(--ink);animation:speedDn .3s linear infinite}
+.hero.rising .trail i{animation-name:speedUp}
+.trail i:nth-child(1){left:6%;height:42%;animation-delay:-.05s}
+.trail i:nth-child(2){left:24%;height:60%;animation-delay:-.2s}
+.trail i:nth-child(3){left:42%;height:34%;animation-delay:-.12s}
+.trail i:nth-child(4){left:58%;height:56%;animation-delay:-.26s}
+.trail i:nth-child(5){left:76%;height:38%;animation-delay:-.09s}
+.trail i:nth-child(6){left:93%;height:50%;animation-delay:-.17s}
+@keyframes speedDn{0%{transform:translateY(-30%);opacity:0}25%{opacity:1}100%{transform:translateY(130%);opacity:0}}
+@keyframes speedUp{0%{transform:translateY(130%);opacity:0}25%{opacity:1}100%{transform:translateY(-30%);opacity:0}}
+.aura{position:absolute;left:50%;bottom:calc(var(--hw) * -0.3);width:calc(var(--hw) * 1.35);height:calc(var(--hw) * 0.45);transform:translateX(-50%);opacity:0;transition:opacity .3s}
 .hero.hovering .aura{opacity:1}
-.aura i{position:absolute;inset:0;border:3px solid #fff;border-radius:50%;box-shadow:0 0 0 2px var(--ink),inset 0 0 0 2px var(--ink);animation:ring 1.5s ease-out infinite}
-.aura i:nth-child(2){animation-delay:.75s}
+.aura::before{content:"";position:absolute;inset:-40% -15%;border-radius:50%;background:radial-gradient(closest-side,rgba(93,255,122,.55),rgba(93,255,122,0));animation:glowk 2.4s ease-in-out infinite}
+.aura i{position:absolute;inset:0;border:3px solid #9dffb0;border-radius:50%;box-shadow:0 0 0 2px var(--ink),inset 0 0 0 2px var(--ink),0 0 12px 2px rgba(93,255,122,.6);animation:ring 1.6s ease-out infinite}
+.aura i:nth-child(2){animation-delay:.8s}
 @keyframes ring{0%{transform:scale(.3);opacity:1}100%{transform:scale(1.2);opacity:0}}
 
 /* Breaking through a panel */
@@ -1010,8 +1042,7 @@ const PANELS={
     +`<i class="streak" style="left:78%;top:5%;animation-delay:-2s"></i><i class="streak" style="left:34%;top:9%;animation-duration:13s;animation-delay:-9s"></i>`},
   a:{img:"p-a",ar:1.7504,ov:()=>
     glow(50,46,32,"255,196,90",6,.45)
-    +`<div class="lane rl" style="top:23%;animation-duration:34s;animation-delay:-9s"><div class="heli drift" style="width:9%"><img src="${ART}heli.webp" alt=""><img class="rotor" src="${ART}rotor.webp" alt=""></div></div>`
-    +`<div class="lane lr" style="top:37%;animation-duration:27s;animation-delay:-16s"><div style="width:4.5%">${BIRDS(4,"#0b0f22")}</div></div>`},
+    +`<div class="lane rl" style="top:23%;animation-duration:34s;animation-delay:-9s"><div class="heli drift" style="width:9%"><img src="${ART}heli.webp" alt=""><img class="rotor" src="${ART}rotor.webp" alt=""></div></div>`},
   t:{img:"p-t",ar:1.7504,ov:()=>
     glow(71,22.5,34,"205,255,190",6,.5)
     +`<div class="rain"><i></i></div><i class="flash"></i>`},
@@ -1019,13 +1050,11 @@ const PANELS={
     sparkles(37,16,10,32,"#ffe9a8",.6)+glow(50,62,44,"255,220,90",4.5,.35)
     +`<div class="river" style="left:37.5%;top:79%;width:26%;height:21%"><i></i></div>`},
   c:{img:"p-c",ar:1.7886,ov:()=>
-    `<div class="lane lr" style="top:25%;animation-duration:24s;animation-delay:-5s"><div class="drift" style="width:6.5%">${PLANE.replace('<svg ','<svg style="transform:scaleX(-1)" ')}</div></div>`
-    +`<div class="lane rl" style="top:40%;animation-duration:33s;animation-delay:-20s"><div style="width:4%">${BIRDS(3,INK)}</div></div>`},
+    `<div class="lane lr" style="top:25%;animation-duration:24s;animation-delay:-5s"><div class="drift" style="width:6.5%">${PLANE.replace('<svg ','<svg style="transform:scaleX(-1)" ')}</div></div>`},
   d:{img:"p-d",ar:1.8534,ov:()=>
     `<img class="zep" src="${ART}zep1.webp" alt="" style="left:58.4%;top:18.5%;width:12.4%;animation-duration:17s">`
     +`<img class="zep" src="${ART}zep2.webp" alt="" style="left:75.2%;top:26%;width:13.8%;animation-duration:23s;animation-delay:-9s">`
-    +[0,1.5,3].map(dl=>`<i class="puff" style="left:56.7%;top:66.6%;animation-delay:-${dl}s"></i>`).join("")
-    +`<div class="lane lr" style="top:38%;animation-duration:31s;animation-delay:-12s"><div style="width:3.6%">${BIRDS(3,"#1b1712")}</div></div>`},
+    +[0,1.5,3].map(dl=>`<i class="puff" style="left:56.7%;top:66.6%;animation-delay:-${dl}s"></i>`).join("")},
   g:{img:"p-g",ar:1.7809,ov:()=>
     `<img class="balloon" src="${ART}balloon.webp" alt="" style="left:40.6%;top:12%;width:9.1%">`
     +`<img class="glide" src="${ART}birds.webp" alt="" style="left:22.3%;top:53.8%;width:17.7%">`}
@@ -1035,8 +1064,8 @@ const world=$("#world"), reel=$("#reel");
 const panelHTML=(key,cap)=>{const P=PANELS[key];
   return `<section class="era e-${key}"${P.label?` aria-label="${P.label}"`:""} style="--ar:${P.ar}"><div class="art"><img class="pic" src="${ART}${P.img}.webp" alt="" draggable="false" decoding="async"${key==="s"||key==="a"?' fetchpriority="high"':""}><div class="ov">${P.ov()}</div></div>${cap||""}</section>`;};
 reel.innerHTML=panelHTML("s")+TIER_ORDER.map(t=>{const T=TIERS[t];return panelHTML(t,`<span class="cap">${T.name}<i>${T.pts}</i></span>`);}).join("")
-  +`<div class="hero up pose-h hovering" id="hero"><div class="aura"><i></i><i></i></div><div class="bob"><img class="hs" src="${ART}hero.webp" alt="" draggable="false"></div></div>`;
-const hero=$("#hero");
+  +`<div class="hero up pose-h hovering" id="hero"><div class="aura"><i></i><i></i></div><div class="bob"><div class="fig"><div class="wob"><img class="l cape" src="${ART}hero-cape.webp" alt="" draggable="false"><img class="l body" src="${ART}hero-body.webp" alt="" draggable="false"><img class="l kg" src="${ART}hero-kglow.webp" alt="" draggable="false"><img class="l eg" src="${ART}hero-eyes.webp" alt="" draggable="false"></div></div><div class="trail">${"<i></i>".repeat(6)}</div></div></div>`;
+const hero=$("#hero"), heroBob=hero.querySelector(".bob"), heroWob=hero.querySelector(".wob");
 /* Only animate the panels that are on screen */
 if("IntersectionObserver" in window){
   const io=new IntersectionObserver(es=>{ if(world.classList.contains("moving")) return; es.forEach(e=>e.target.classList.toggle("live",e.isIntersecting)); },{root:world,rootMargin:"60% 0px",threshold:0});
@@ -1151,6 +1180,7 @@ function land(g,d,withBurst){
   if(TIER_ORDER[d-1]==="g"){ g.eras[d].classList.add("hit"); if(withBurst) addBurst(g,landY(g,d)+g.hh*0.4,"1 IN KRYPTILLION!",true); }
 }
 const HOVER_CLS="hero up pose-h hovering";
+function squash(){ heroBob.animate([{transform:"scale(1.22,.78)"},{transform:"scale(.94,1.08)",offset:.55},{transform:"scale(1,1)"}],{duration:260,easing:"ease-out"}); }
 function finalState(d){
   const g=geo(); clearMarks(); hero.className=HOVER_CLS;
   if(d<=0){ setHero(g,g.hover); setCam(0); return; }
@@ -1170,9 +1200,11 @@ async function dive(d){
   if(reduceMotion()){ finalState(d); WS.busy=false; return; }
   const tears=[]; (async()=>{ for(let i=1;i<=d;i++){ if(!tears[i-1]) tears[i-1]=addTear(g,i,true); await new Promise(r=>requestAnimationFrame(r)); } })();
   const sp=()=>G.fast?0.2:1;                         /* a tap speeds the fall up instead of skipping it */
-  hero.classList.remove("pose-h","hovering");       /* fists up, ready */
-  await sleep(160*sp());
-  hero.classList.remove("up");                       /* flip head-down into the dive */
+  hero.classList.remove("pose-h","hovering");       /* crouch, ready */
+  const crouch=heroWob.animate([{transform:"scale(1,1)"},{transform:"scale(1.1,.86) translateY(6%)"}],{duration:170*sp(),easing:"ease-out",fill:"forwards"});
+  await sleep(170*sp());
+  crouch.cancel();
+  hero.classList.remove("up"); hero.classList.add("falling");   /* flip head-down into the dive */
   SND.dive(); setMoving(true);
   await sleep(380*sp());
   let y=WS.heroY, c=WS.cam;
@@ -1188,7 +1220,7 @@ async function dive(d){
     const by=g.eras[i].offsetTop, toY=by-g.hh+Math.round(g.hh*0.22);
     const dur=Math.max(460,Math.min(820,(toY-y)*1.0))*Math.max(0.82,1-(i-1)*0.05);
     await seg(toY,follow(toY),dur,"cubic-bezier(.5,0,1,1)");
-    openTear(tears[i-1]||(tears[i-1]=addTear(g,i,true))); addImpact(g,by); addShards(g,by); shakeWorld(G.fast?2:3+i*1.2);
+    openTear(tears[i-1]||(tears[i-1]=addTear(g,i,true))); addImpact(g,by); squash(); addShards(g,by); shakeWorld(G.fast?2:3+i*1.2);
     if(!G.fast||i===d){ addBurst(g,by,SFX[i-1],false); SND.impact(i); SND.rip(i); }
     await sleep(210*sp());
   }
@@ -1196,7 +1228,7 @@ async function dive(d){
   /* carry through the hole and slow down inside the panel */
   await seg(ly+Math.round(g.hh*0.38),camFor(g,d),520,"cubic-bezier(0,0,.3,1)");
   /* flip upright and spring into a hover */
-  hero.classList.add("up"); SND.flip();
+  hero.classList.remove("falling"); hero.classList.add("up"); SND.flip();
   addWhoosh(g,y,"FWOOSH!");
   await seg(ly,camFor(g,d),520,"cubic-bezier(.34,1.56,.64,1)");
   hero.className=HOVER_CLS; land(g,d,true); if(TIER_ORDER[d-1]==="g") SND.gem(); else SND.hover();
@@ -1215,7 +1247,7 @@ async function rise(){
   const g=geo();
   reel.querySelectorAll(".boom,.whoosh").forEach(n=>n.remove());
   if(reduceMotion()||(WS.cam===0&&WS.heroY===g.hover)){ resetWorld(); return; }
-  hero.className="hero up";                          /* fists up, fly */
+  hero.className="hero up rising";                   /* fists up, fly */
   await sleep(240);
   addWhoosh(g,WS.heroY-g.hh*0.2,"ZOOM!"); SND.rise(); setMoving(true);
   const tears=[...reel.querySelectorAll(".tear")], y0=WS.heroY, y1=g.hover;
