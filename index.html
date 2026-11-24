@@ -136,7 +136,6 @@ button{cursor:pointer}
 .e-g{background:repeating-linear-gradient(90deg,transparent 0 10px,rgba(22,26,51,.5) 10px 11.5px,transparent 11.5px 18px),#fff}
 .e-s{background:linear-gradient(180deg,#363aa0,#151852)}
 .bg,.city,.fx{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none}
-.era.live .bg,.era.live .fx{will-change:transform}
 /* Background motion. Units inside the SVG are the drawing's own units. */
 :is(.bg,.fx) .drift{animation:drift 45s ease-in-out infinite alternate}
 @keyframes drift{from{transform:translateX(-220px)}to{transform:translateX(220px)}}
@@ -181,7 +180,7 @@ button{cursor:pointer}
   background:linear-gradient(115deg,#ffd400,#ff7ac6,#7fe0ff,#b9ff9e,#ffd400);background-size:300% 300%;animation:foil 3.5s linear infinite;
 }
 /* Hero: a dive pose (head down, fists first) and a hover pose (upright, hands on hips) */
-.hero{position:absolute;left:0;top:0;width:var(--hw);height:var(--hh);z-index:6;pointer-events:none}
+.hero{position:absolute;left:0;top:0;width:var(--hw);height:var(--hh);z-index:6;pointer-events:none;will-change:transform}
 .hero .bob{position:relative;width:100%;height:100%}
 .hero.hovering .bob{animation:bob 1.9s ease-in-out infinite}
 .hero svg{position:absolute;inset:0;display:block;width:100%;height:100%;overflow:visible}
@@ -202,7 +201,9 @@ button{cursor:pointer}
 
 /* Breaking through a panel */
 .tear,.boom,.shard,.impact,.flashb,.whoosh{position:absolute;pointer-events:none}
-.tear{z-index:4;transition:opacity .45s}
+/* iPhones (Safari's engine) can draw a rip under the panels while the camera moves unless it has its own layer.
+   A permanent layer keeps it on top of the panels the whole time. */
+.tear{z-index:4;transition:opacity .45s;will-change:transform;-webkit-transform:translateZ(0);transform:translateZ(0)}
 .tear.fade{opacity:0}
 .tear svg,.boom svg,.impact svg,.shard svg{display:block;width:100%;height:100%;overflow:visible}
 .impact{z-index:6;animation:impact .5s ease-out forwards}
