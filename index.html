@@ -219,10 +219,7 @@ button{cursor:pointer}
   font-family:var(--display);font-weight:900;font-style:italic;font-size:clamp(36px,6vw,80px);line-height:1;color:var(--ink);
   text-shadow:0 0 6px #fff,0 0 12px #fff,3px 3px 0 #fff;
 }
-.era.e-g.hit::after{
-  content:"";position:absolute;inset:0;pointer-events:none;opacity:.7;mix-blend-mode:multiply;z-index:0;
-  background:linear-gradient(115deg,#ffd400,#ff7ac6,#7fe0ff,#b9ff9e,#ffd400);background-size:300% 300%;animation:foil 3.5s linear infinite;
-}
+/* the 1 in Kryptillion panel stays black and white; the burst carries the rainbow */
 /* Hero: a body layer over a cape layer, with glowing K and eyes. Upright to hover and fly up,
    flipped head-first for the dive. The cape billows from the shoulders. */
 .hero{position:absolute;left:0;top:0;width:var(--hw);height:var(--hh);z-index:6;pointer-events:none;will-change:transform}
@@ -319,6 +316,9 @@ button{cursor:pointer}
 @keyframes whoosh{0%{transform:translate(-12px,12px) rotate(-10deg) scale(.6);opacity:0}25%{transform:translate(0,0) rotate(-10deg) scale(1.06);opacity:1}75%{opacity:1}100%{transform:translate(18px,-16px) rotate(-10deg) scale(1);opacity:0}}
 .boom{z-index:7;animation:boom .85s ease-out forwards}
 .boom.stay{animation:boomIn .45s cubic-bezier(.2,1.6,.4,1) forwards}
+.boom.stay svg{animation:foilHue 2.4s linear infinite,gemPulse 1.2s ease-in-out infinite alternate;filter:drop-shadow(0 0 6px rgba(255,255,255,.9))}
+@keyframes foilHue{from{filter:hue-rotate(0deg) drop-shadow(0 0 6px rgba(255,255,255,.9))}to{filter:hue-rotate(360deg) drop-shadow(0 0 6px rgba(255,255,255,.9))}}
+@keyframes gemPulse{from{transform:scale(1)}to{transform:scale(1.06)}}
 @keyframes boom{0%{transform:scale(.3) rotate(-8deg);opacity:0}25%{transform:scale(1.08) rotate(-8deg);opacity:1}70%{transform:scale(1) rotate(-8deg);opacity:1}100%{transform:scale(1) rotate(-8deg);opacity:0}}
 @keyframes boomIn{0%{transform:scale(.3) rotate(-6deg);opacity:0}100%{transform:scale(1) rotate(-6deg);opacity:1}}
 .shard{z-index:5}
@@ -958,11 +958,13 @@ function submit(value,timedOut){
 /* ---------- The comic world: six full-width era panels, deeper is older ---------- */
 const INK="#161a33";
 const SFX=["RIIIP!","SKRITCH!","KRRRIP!","SHRAKK!","KA-RIIIP!","KRA-THOOM!"];
-function burstSVG(word){
+function burstSVG(word,foil){
   const pts=[]; const n=13;
   for(let j=0;j<n*2;j++){const a=Math.PI*j/n, r=j%2?0.66:1; pts.push((50+Math.cos(a)*48*r).toFixed(1)+","+(28+Math.sin(a)*26*r).toFixed(1));}
   const fs=word.length>12?12:word.length>7?17:20, fit=word.length>9?` textLength="62" lengthAdjust="spacingAndGlyphs"`:"";
-  return `<svg viewBox="0 0 100 56" aria-hidden="true"><polygon points="${pts.join(" ")}" fill="#ffd400" stroke="${INK}" stroke-width="2.5" stroke-linejoin="round"/><text x="50" y="${28+fs*0.36}" text-anchor="middle" font-family="Bangers, Barlow Condensed, Arial Narrow, sans-serif" font-weight="400" letter-spacing="1" font-size="${fs}" fill="${INK}"${fit}>${word}</text></svg>`;
+  const fill=foil?"url(#foilBurst)":"#ffd400";
+  const defs=foil?`<defs><linearGradient id="foilBurst" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff5ea8"/><stop offset=".25" stop-color="#ffd400"/><stop offset=".5" stop-color="#7dff9e"/><stop offset=".75" stop-color="#5fd0ff"/><stop offset="1" stop-color="#b98cff"/></linearGradient></defs>`:"";
+  return `<svg viewBox="0 0 100 56" aria-hidden="true">${defs}<polygon class="bp" points="${pts.join(" ")}" fill="${fill}" stroke="${INK}" stroke-width="2.5" stroke-linejoin="round"/><text x="50" y="${28+fs*0.36}" text-anchor="middle" font-family="Bangers, Barlow Condensed, Arial Narrow, sans-serif" font-weight="400" letter-spacing="1" font-size="${fs}" fill="${INK}"${fit}>${word}</text></svg>`;
 }
 /* ---------- Paper tears. Each break rips the page: a ragged hole with a white torn edge,
    paper flaps peeled back, creases around it, and tape strips ready for the trip back up. ---------- */
@@ -1158,7 +1160,8 @@ function openTear(t){
 /* While the camera moves, panels sliding into view stay still until it stops, so phones only move pictures instead of redrawing them */
 function setMoving(on){
   world.classList.toggle("moving",on);
-  if(!on) refreshLive();
+  /* keep every panel's motion running while the hero falls or climbs past it */
+  if(on) reel.querySelectorAll(".era").forEach(e=>e.classList.add("live")); else refreshLive();
 }
 /* Fold the flaps back, close the rip to a seam, and tape it shut */
 function tapeUp(t){
@@ -1192,7 +1195,7 @@ function addWhoosh(g,y,word){
 function shakeWorld(a){ world.animate([{transform:"translate(0,0)"},{transform:`translate(${-a}px,${a}px)`},{transform:`translate(${a*0.7}px,${-a*0.6}px)`},{transform:`translate(${-a*0.3}px,${a*0.3}px)`},{transform:"translate(0,0)"}],{duration:220,easing:"ease-out"}); }
 function addBurst(g,by,word,stay){
   const bw=Math.round(Math.max(140,Math.min(230,g.W*0.17))*(stay?1.35:1)), bh=Math.round(bw*0.56);
-  const b=document.createElement("div"); b.className="boom"+(stay?" stay":""); b.innerHTML=burstSVG(word);
+  const b=document.createElement("div"); b.className="boom"+(stay?" stay":""); b.innerHTML=burstSVG(word,stay);
   let left=g.X-g.hw/2-bw-6, top=by-bh/2;
   if(stay){
     /* the score card sits right or below, so the big burst goes on the open left side, or under the hero on a phone */
