@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-visual">
 <title>Kryptillion | Daily superhero rare-answer trivia</title>
 <meta name="description" content="Seven superhero prompts a day. Marvel, DC, Invincible and The Boys. The rarer your correct answer, the more it's worth.">
 <meta name="theme-color" content="#161a33">
@@ -1386,10 +1386,14 @@ reel.innerHTML=`<section class="era e-s" aria-label="Above the city">${TOP.bg}${
 const hero=$("#hero");
 /* Only animate the panels that are on screen */
 if("IntersectionObserver" in window){
-  const io=new IntersectionObserver(es=>es.forEach(e=>e.target.classList.toggle("live",e.isIntersecting)),{root:world,rootMargin:"60% 0px",threshold:0});
+  const io=new IntersectionObserver(es=>{ if(world.classList.contains("moving")) return; es.forEach(e=>e.target.classList.toggle("live",e.isIntersecting)); },{root:world,rootMargin:"60% 0px",threshold:0});
   reel.querySelectorAll(".era").forEach(e=>io.observe(e));
 } else reel.querySelectorAll(".era").forEach(e=>e.classList.add("live"));
 const WS={cam:0,heroY:0,depth:null,busy:false};
+function refreshLive(){
+  const wr=world.getBoundingClientRect(), pad=wr.height*0.6;
+  reel.querySelectorAll(".era").forEach(e=>{const r=e.getBoundingClientRect(); e.classList.toggle("live",r.bottom>wr.top-pad&&r.top<wr.bottom+pad);});
+}
 const reduceMotion=()=>matchMedia("(prefers-reduced-motion: reduce)").matches;
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 
@@ -1404,7 +1408,7 @@ function geo(){
   const eras=[...reel.querySelectorAll(".era")], VH=world.clientHeight, W=reel.clientWidth;
   const hw=hero.offsetWidth, hh=hero.offsetHeight;
   const land=W>=640&&innerHeight<=520;
-  return {eras,VH,W,X:Math.round(land?W*0.3:W<700?W*0.64:W>=1000?W*0.36:W/2),hw,hh,maxCam:Math.max(0,reel.offsetHeight-VH),hover:eras[0].offsetTop+12};
+  return {eras,VH,W,X:Math.round(land?W*0.3:W/2),hw,hh,maxCam:Math.max(0,reel.offsetHeight-VH),hover:eras[0].offsetTop+12};
 }
 function setCam(y){WS.cam=y; reel.style.transform=`translateY(${-y}px)`}
 function heroT(g,y){return `translate(${g.X-g.hw/2}px,${y}px)`}
@@ -1417,17 +1421,25 @@ function clearMarks(){
   reel.querySelectorAll(".era").forEach(e=>e.classList.remove("here","hit"));
 }
 function gutterY(g,i){const p=g.eras[i-1]; return Math.round((p.offsetTop+p.offsetHeight+g.eras[i].offsetTop)/2);}
-function addTear(g,i,anim){
+function addTear(g,i,hidden){
   const w=Math.round(g.hw*3.1), h=Math.round(w*TH/TW), gy=gutterY(g,i);
   const t=document.createElement("div"); t.className="tear"; t.dataset.y=gy;
   t.innerHTML=tearSVG(((G?G.idx*7+G.i:0)+1)*7919+i*104729);
-  Object.assign(t.style,{width:w+"px",height:h+"px",left:Math.round(g.X-w*TCX/TW)+"px",top:Math.round(gy-h*TCY/TH)+"px"}); reel.appendChild(t);
-  if(!anim) return;
-  t.animate([{clipPath:"inset(0% 38% 64% 38%)"},{clipPath:"inset(0% 0% 0% 0%)"}],{duration:250,easing:"cubic-bezier(.2,.9,.3,1)"});
+  Object.assign(t.style,{width:w+"px",height:h+"px",left:Math.round(g.X-w*TCX/TW)+"px",top:Math.round(gy-h*TCY/TH)+"px"});
+  if(hidden) t.style.visibility="hidden";
+  reel.appendChild(t); return t;
+}
+function openTear(t){
+  t.style.visibility="";
   const op=t.querySelector(".open");
-  op.animate([{transform:"scale(.3,.5)"},{transform:"scale(1.05,1.03)",offset:.7},{transform:"scale(1,1)"}],{duration:300,easing:"cubic-bezier(.2,.9,.3,1)"});
+  op.animate([{transform:"scale(.12,.35)"},{transform:"scale(1.06,1.04)",offset:.65},{transform:"scale(1,1)"}],{duration:300,easing:"cubic-bezier(.2,.9,.3,1)"});
   t.querySelectorAll(".flp").forEach((f,k)=>f.animate([{transform:"scaleY(0)"},{transform:"scaleY(1.14)",offset:.7},{transform:"scaleY(1)"}],{duration:340,delay:60+k*45,easing:"cubic-bezier(.2,.9,.3,1)",fill:"backwards"}));
   t.querySelector(".wr").animate([{opacity:0},{opacity:1}],{duration:220,delay:120,fill:"backwards"});
+}
+/* While the camera moves, panels sliding into view stay still until it stops, so phones only move pictures instead of redrawing them */
+function setMoving(on){
+  world.classList.toggle("moving",on);
+  if(!on) refreshLive();
 }
 /* Fold the flaps back, close the rip to a seam, and tape it shut */
 function tapeUp(t){
@@ -1462,15 +1474,17 @@ function shakeWorld(a){ world.animate([{transform:"translate(0,0)"},{transform:`
 function addBurst(g,by,word,stay){
   const bw=Math.round(Math.max(140,Math.min(230,g.W*0.17))*(stay?1.35:1)), bh=Math.round(bw*0.56);
   const b=document.createElement("div"); b.className="boom"+(stay?" stay":""); b.innerHTML=burstSVG(word);
-  let left=stay?g.X+g.hw/2+8:g.X-g.hw/2-bw-6, top=by-bh/2;
-  if(stay&&left+bw>g.W-4){ left=8; top=Math.round(by-g.hh*0.4-g.hw*0.95+g.hw*1.05); }
-  if(left<4) left=g.X+g.hw/2+6;
-  left=Math.min(left,g.W-bw-4);
+  let left=g.X-g.hw/2-bw-6, top=by-bh/2;
+  if(stay){
+    /* the score card sits right or below, so the big burst goes on the open left side, or under the hero on a phone */
+    if(left<8){ left=Math.round(g.X-bw/2); top=Math.round(by+g.hh*0.6+6); }
+  } else if(left<4) left=g.X+g.hw/2+6;
+  left=Math.max(4,Math.min(left,g.W-bw-4));
   Object.assign(b.style,{width:bw+"px",height:bh+"px",left:left+"px",top:top+"px"}); reel.appendChild(b);
   if(!stay) setTimeout(()=>b.remove(),900);
 }
 function addShards(g,by){
-  for(let s=0;s<12;s++){
+  for(let s=0;s<8;s++){
     const sz=9+Math.round(Math.random()*11), sh=document.createElement("div"); sh.className="shard";
     const q=()=>(Math.random()*5).toFixed(1), pts=`${q()},${q()} ${20-q()},${q()*.6} ${20-q()},${20-q()} ${q()*.6},${20-q()}`;
     sh.innerHTML=`<svg viewBox="0 0 20 20"><polygon points="${pts}" fill="${s%3===2?"#e6dec6":"#fbf8ee"}" stroke="${INK}" stroke-width="1.6" stroke-linejoin="round"/></svg>`;
@@ -1488,6 +1502,7 @@ function finalState(d){
   const g=geo(); clearMarks(); hero.className=HOVER_CLS;
   if(d<=0){ setHero(g,g.hover); setCam(0); return; }
   for(let i=1;i<=d;i++) addTear(g,i,false);
+  refreshLive();
   setHero(g,landY(g,d)); setCam(camFor(g,d)); land(g,d,true);
 }
 function resetWorld(){
@@ -1500,41 +1515,39 @@ async function dive(d){
   const g=geo();
   if(d<=0){ hero.className=HOVER_CLS; WS.busy=false; return; }
   if(reduceMotion()){ finalState(d); WS.busy=false; return; }
+  const tears=[]; (async()=>{ for(let i=1;i<=d;i++){ if(!tears[i-1]) tears[i-1]=addTear(g,i,true); await new Promise(r=>requestAnimationFrame(r)); } })();
+  const sp=()=>G.fast?0.2:1;                         /* a tap speeds the fall up instead of skipping it */
   hero.classList.remove("pose-h","hovering");       /* fists up, ready */
-  await sleep(160);
+  await sleep(160*sp());
   hero.classList.remove("up");                       /* flip head-down into the dive */
-  SND.dive();
-  await sleep(380);
+  SND.dive(); setMoving(true);
+  await sleep(380*sp());
   let y=WS.heroY, c=WS.cam;
   const seg=async(toY,toC,dur,ease)=>{
-    if(G.skip) return false;
-    const a1=hero.animate([{transform:heroT(g,y)},{transform:heroT(g,toY)}],{duration:dur,easing:ease,fill:"forwards"});
-    const a2=reel.animate([{transform:`translateY(${-c}px)`},{transform:`translateY(${-toC}px)`}],{duration:dur,easing:ease,fill:"forwards"});
+    const a1=hero.animate([{transform:heroT(g,y)},{transform:heroT(g,toY)}],{duration:dur*sp(),easing:ease,fill:"forwards"});
+    const a2=reel.animate([{transform:`translateY(${-c}px)`},{transform:`translateY(${-toC}px)`}],{duration:dur*sp(),easing:ease,fill:"forwards"});
     G.anims=[a1,a2];
     try{ await Promise.all([a1.finished,a2.finished]); }catch(e){}
-    a1.cancel(); a2.cancel(); y=toY; c=toC; setHero(g,y); setCam(c);
-    return !G.skip;
+    y=toY; c=toC; setHero(g,y); setCam(c); a1.cancel(); a2.cancel();
   };
   const follow=hy=>Math.max(0,Math.min(g.maxCam,Math.round(hy-g.VH*0.3)));
   for(let i=1;i<=d;i++){
     const by=g.eras[i].offsetTop, toY=by-g.hh+Math.round(g.hh*0.22);
     const dur=Math.max(460,Math.min(820,(toY-y)*1.0))*Math.max(0.82,1-(i-1)*0.05);
-    if(!await seg(toY,follow(toY),dur,"cubic-bezier(.5,0,1,1)")) break;
-    addTear(g,i,true); addImpact(g,by); addBurst(g,by,SFX[i-1],false); addShards(g,by); shakeWorld(3+i*1.2); SND.impact(i); SND.rip(i);
-    await sleep(210);
-    if(G.skip) break;
+    await seg(toY,follow(toY),dur,"cubic-bezier(.5,0,1,1)");
+    openTear(tears[i-1]||(tears[i-1]=addTear(g,i,true))); addImpact(g,by); addShards(g,by); shakeWorld(G.fast?2:3+i*1.2);
+    if(!G.fast||i===d){ addBurst(g,by,SFX[i-1],false); SND.impact(i); SND.rip(i); }
+    await sleep(210*sp());
   }
   const ly=landY(g,d);
   /* carry through the hole and slow down inside the panel */
-  if(!G.skip) await seg(ly+Math.round(g.hh*0.38),camFor(g,d),520,"cubic-bezier(0,0,.3,1)");
+  await seg(ly+Math.round(g.hh*0.38),camFor(g,d),520,"cubic-bezier(0,0,.3,1)");
   /* flip upright and spring into a hover */
-  if(!G.skip){
-    hero.classList.add("up"); SND.flip();
-    addWhoosh(g,y,"FWOOSH!");
-    await seg(ly,camFor(g,d),520,"cubic-bezier(.34,1.56,.64,1)");
-  }
-  if(G.skip){ finalState(d); }
-  else{ hero.className=HOVER_CLS; land(g,d,true); if(TIER_ORDER[d-1]==="g") SND.gem(); else SND.hover(); }
+  hero.classList.add("up"); SND.flip();
+  addWhoosh(g,y,"FWOOSH!");
+  await seg(ly,camFor(g,d),520,"cubic-bezier(.34,1.56,.64,1)");
+  hero.className=HOVER_CLS; land(g,d,true); if(TIER_ORDER[d-1]==="g") SND.gem(); else SND.hover();
+  setMoving(false);
   WS.busy=false;
 }
 
@@ -1551,7 +1564,7 @@ async function rise(){
   if(reduceMotion()||(WS.cam===0&&WS.heroY===g.hover)){ resetWorld(); return; }
   hero.className="hero up";                          /* fists up, fly */
   await sleep(240);
-  addWhoosh(g,WS.heroY-g.hh*0.2,"ZOOM!"); SND.rise();
+  addWhoosh(g,WS.heroY-g.hh*0.2,"ZOOM!"); SND.rise(); setMoving(true);
   const tears=[...reel.querySelectorAll(".tear")], y0=WS.heroY, y1=g.hover;
   const dur=Math.min(3000,900+tears.length*360), E=bezier(...RISE_EASE), ease=`cubic-bezier(${RISE_EASE.join(",")})`;
   const a1=hero.animate([{transform:heroT(g,y0)},{transform:heroT(g,y1)}],{duration:dur,easing:ease,fill:"forwards"});
@@ -1565,12 +1578,16 @@ async function rise(){
   /* back on top. The taped rip at the bottom edge fades as the next prompt starts. */
   reel.querySelectorAll(".boom,.shard,.impact,.flashb,.whoosh").forEach(n=>n.remove());
   reel.querySelectorAll(".era").forEach(e=>e.classList.remove("here","hit"));
-  hero.className=HOVER_CLS; setHero(g,g.hover); setCam(0); WS.depth=null;
+  hero.className=HOVER_CLS; setHero(g,g.hover); setCam(0); WS.depth=null; setMoving(false);
   setTimeout(()=>{ tears.forEach(t=>t.classList.add("fade")); setTimeout(()=>tears.forEach(t=>t.remove()),450); },700);
 }
 
-let rzT=null;
+let rzT=null, lastW=innerWidth;
 addEventListener("resize",()=>{clearTimeout(rzT); rzT=setTimeout(()=>{
+  const touch=matchMedia("(pointer:coarse)").matches, wChanged=Math.abs(innerWidth-lastW)>2;
+  lastW=innerWidth;
+  document.documentElement.style.setProperty("--mh",$(".mast").offsetHeight+"px");
+  if(touch&&!wChanged) return;                       /* browser bars or the keyboard moved; leave the hero where he is */
   if(WS.busy){ G&&(G.relayout=true); return; }
   layout();
   if(G&&G.phase==="result"&&WS.depth!==null) finalState(WS.depth); else resetWorld();
@@ -1583,10 +1600,10 @@ function reveal(P,res){
   const last=G.i===PER_DAY-1;
   const depth=res.tier==="x"?0:TIER_ORDER.indexOf(res.tier)+1;
   const gotGem=res.tier==="g";
-  G.phase="dive"; G.skip=false; G.anims=[];
+  G.phase="dive"; G.fast=false; G.anims=[];
   const inp=$("#inp"); if(inp) inp.blur();
   const card=screen.querySelector(".card"); if(card) card.classList.add("out");
-  const skip=e=>{ if(G.phase!=="dive") return; if(e.type==="keydown"&&e.repeat) return; G.skip=true; (G.anims||[]).forEach(a=>a.cancel()); };
+  const skip=e=>{ if(G.phase!=="dive"||G.fast) return; if(e.type==="keydown"&&e.repeat) return; G.fast=true; (G.anims||[]).forEach(a=>{try{a.updatePlaybackRate(5)}catch(x){a.playbackRate=5}}); };
   (async()=>{
     await sleep(card?210:0);
     screen.innerHTML=""; screen.className="stage bottom";
