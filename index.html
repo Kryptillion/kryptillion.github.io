@@ -201,19 +201,10 @@ button{cursor:pointer}
 @keyframes ring{0%{transform:scale(.3);opacity:1}100%{transform:scale(1.2);opacity:0}}
 
 /* Breaking through a panel */
-.hole,.boom,.shard,.impact,.flashb,.whoosh{position:absolute;pointer-events:none}
-.hole{z-index:4}
-.hole svg,.boom svg,.impact svg{display:block;width:100%;height:100%;overflow:visible}
-.hole.anim{animation:holeOpen .36s cubic-bezier(.2,1.5,.4,1) both}
-@keyframes holeOpen{0%{transform:scale(.12) rotate(-14deg)}100%{transform:scale(1) rotate(0)}}
-.hole .cr{stroke-dasharray:1;stroke-dashoffset:0}
-.hole.anim .cr{stroke-dashoffset:1;animation:crack .5s .12s ease-out forwards}
-@keyframes crack{to{stroke-dashoffset:0}}
-.hole .fl{transform-box:fill-box}
-.hole .fl.u{transform-origin:50% 100%}
-.hole .fl.d{transform-origin:50% 0%}
-.hole.anim .fl{animation:flapOpen .5s .08s cubic-bezier(.2,1.7,.4,1) both}
-@keyframes flapOpen{from{transform:scaleY(0) rotate(-20deg)}to{transform:scaleY(1) rotate(0)}}
+.tear,.boom,.shard,.impact,.flashb,.whoosh{position:absolute;pointer-events:none}
+.tear{z-index:4;transition:opacity .45s}
+.tear.fade{opacity:0}
+.tear svg,.boom svg,.impact svg,.shard svg{display:block;width:100%;height:100%;overflow:visible}
 .impact{z-index:6;animation:impact .5s ease-out forwards}
 @keyframes impact{0%{transform:scale(.35);opacity:1}100%{transform:scale(1.35);opacity:0}}
 .flashb{z-index:5;border-radius:50%;background:radial-gradient(circle,#fff 0,#fff 32%,rgba(255,255,255,0) 70%);animation:flashb .32s ease-out forwards}
@@ -227,8 +218,7 @@ button{cursor:pointer}
 .boom.stay{animation:boomIn .45s cubic-bezier(.2,1.6,.4,1) forwards}
 @keyframes boom{0%{transform:scale(.3) rotate(-8deg);opacity:0}25%{transform:scale(1.08) rotate(-8deg);opacity:1}70%{transform:scale(1) rotate(-8deg);opacity:1}100%{transform:scale(1) rotate(-8deg);opacity:0}}
 @keyframes boomIn{0%{transform:scale(.3) rotate(-6deg);opacity:0}100%{transform:scale(1) rotate(-6deg);opacity:1}}
-.shard{z-index:5;width:8px;height:8px;background:var(--ink);clip-path:polygon(50% 0,100% 100%,0 75%)}
-.shard.lite{background:#fbfbf8;clip-path:polygon(0 0,100% 20%,60% 100%)}
+.shard{z-index:5}
 
 /* Stage: the readable layer that sits on top of the world */
 .stage{
@@ -689,6 +679,11 @@ const SND=(()=>{
       tone({f:110-k*8,f2:42,type:"sine",dur:.32,vol:.55+k*.06});
       noise({dur:.16,vol:.3+k*.03,kind:"highpass",f:1700,attack:.002});
       noise({t:.02,dur:.28,vol:.16,kind:"bandpass",f:500,f2:180,q:.8,attack:.003}); },
+    rip(i){ const k=Math.min(i,5);
+      noise({dur:.26,vol:.16+k*.015,kind:"bandpass",f:2800,f2:900,q:.9,attack:.004});
+      [.03,.07,.12,.16].forEach((t,j)=>noise({t,dur:.035,vol:.12-j*.02,kind:"highpass",f:2200+j*300,attack:.002})); },
+    tape(k){ noise({dur:.11,vol:.1,kind:"bandpass",f:1100,f2:3400,q:2,attack:.01});
+      tone({f:170-k*12,f2:90,type:"sine",t:.09,dur:.07,vol:.12}); },
     flip(){ noise({dur:.4,vol:.2,kind:"bandpass",f:500,f2:1800,q:1.6,attack:.05}); },
     hover(){ tone({f:660,type:"sine",dur:.22,vol:.16}); tone({f:990,type:"sine",t:.07,dur:.28,vol:.12}); },
     gem(){ [1047,1319,1568,2093,2637].forEach((f,i)=>tone({f,type:"triangle",t:i*.07,dur:.32,vol:.16})); },
@@ -974,19 +969,99 @@ const DIVE=`<svg class="pd" ${VB} aria-hidden="true"><g transform="rotate(180 30
 return {HOVER,DIVE};
 
 })();
-const SFX=["THWAK!","KRAK!","THOOM!","SKRASH!","KA-BLAM!","KA-THOOM!"];
+const SFX=["RIIIP!","SKRITCH!","KRRRIP!","SHRAKK!","KA-RIIIP!","KRA-THOOM!"];
 function burstSVG(word){
   const pts=[]; const n=13;
   for(let j=0;j<n*2;j++){const a=Math.PI*j/n, r=j%2?0.66:1; pts.push((50+Math.cos(a)*48*r).toFixed(1)+","+(28+Math.sin(a)*26*r).toFixed(1));}
   const fs=word.length>12?12:word.length>7?17:20, fit=word.length>9?` textLength="62" lengthAdjust="spacingAndGlyphs"`:"";
   return `<svg viewBox="0 0 100 56" aria-hidden="true"><polygon points="${pts.join(" ")}" fill="#ffd400" stroke="${INK}" stroke-width="2.5" stroke-linejoin="round"/><text x="50" y="${28+fs*0.36}" text-anchor="middle" font-family="Bangers, Barlow Condensed, Arial Narrow, sans-serif" font-weight="400" letter-spacing="1" font-size="${fs}" fill="${INK}"${fit}>${word}</text></svg>`;
 }
-const HOLE_SVG=`<svg viewBox="-10 -12 120 74" preserveAspectRatio="none" aria-hidden="true">
-<g fill="none" stroke="${INK}" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${["M10 25 L1 21 L-8 24","M9 31 L1 39 L-6 45","M36 8 L32 0 L34 -10","M59 7 L63 0 L61 -11","M90 22 L99 17 L109 19","M91 32 L99 38 L108 36","M55 44 L58 50 L56 60","M31 43 L27 50 L29 59","M74 16 L80 4 L87 -3","M19 38 L13 47 L7 52"].map(d=>`<path class="cr" pathLength="1" d="${d}"/>`).join("")}</g>
-<polygon points="10,25 16,17 21,20 25,11 31,15 36,8 42,13 48,5 53,12 59,7 64,13 70,9 74,16 80,13 85,20 90,22 86,27 91,32 83,33 79,40 73,36 67,43 61,38 55,44 49,38 43,46 37,39 31,43 26,36 19,38 16,31 9,31" fill="${INK}" stroke="#fbfbf8" stroke-width="2" stroke-linejoin="round"/>
-<path d="M30 20 L36 26 M60 18 L66 24 M46 30 L52 34" stroke="#3b4170" stroke-width="2" stroke-linecap="round"/>
-<g fill="#fbfbf8" stroke="${INK}" stroke-width="1.4" stroke-linejoin="round"><polygon class="fl u" points="21,19 27,3 33,14"/><polygon class="fl u" points="63,12 71,-3 76,15"/><polygon class="fl d" points="26,37 33,53 40,41"/><polygon class="fl d" points="64,40 72,55 77,35"/></g>
-</svg>`;
+/* ---------- Paper tears. Each break rips the page: a ragged hole with a white torn edge,
+   paper flaps peeled back, creases around it, and tape strips ready for the trip back up. ---------- */
+const TW=300, TH=360, TCX=150, TCY=170;   /* tear drawing units; TCY sits on the gutter between panels */
+let tearN=0;
+function tearSVG(seed){
+  const r=mulberry(seed), id="t"+(++tearN);
+  const RX=56+r()*8, RY=92+r()*10, OY=14, N=170, TAU=Math.PI*2;
+  const ph=[r()*TAU,r()*TAU,r()*TAU];
+  const wob=t=>.08*Math.sin(2*t+ph[0])+.05*Math.sin(3*t+ph[1])+.03*Math.sin(5*t+ph[2]);
+  const ell=t=>1/Math.sqrt((Math.cos(t)/RX)**2+(Math.sin(t)/RY)**2);
+  const splits=[]; for(let k=0,n=4+Math.floor(r()*3);k<n;k++) splits.push({a:r()*TAU,L:12+r()*28,w:.05+r()*.05});
+  const splitAt=t=>{let v=0; for(const q of splits){const d=Math.abs(((t-q.a)%TAU+TAU*1.5)%TAU-Math.PI); if(d<q.w) v=Math.max(v,q.L*(1-d/q.w));} return v;};
+  const baseR=t=>ell(t)*(1+wob(t));
+  const P=(t,rad)=>[TCX+Math.cos(t)*rad, TCY+OY+Math.sin(t)*rad];
+  const f=pts=>pts.map(([x,y])=>x.toFixed(1)+","+y.toFixed(1)).join(" ");
+  const hole=[], shade=[], rim=[], rimPts=[];
+  let jw=0, ww=8;
+  for(let k=0;k<N;k++){
+    const t=k/N*TAU, sp=splitAt(t);
+    jw=jw*.55+(r()-.5)*5.5; const notch=r()<.07?-(3+r()*5):0;
+    const rh=baseR(t)+jw+notch+sp*.6;
+    hole.push(P(t,rh)); shade.push(P(t,rh+2.5+r()*1.5));
+    ww=ww*.6+(4+r()*10)*.4;
+    const rr=rh-notch*.5+ww+sp*.4+(k%4===0?(r()-.3)*3:0);
+    const pt=P(t,rr); rim.push(pt); rimPts.push([t,rr]);
+  }
+  /* creases in the paper around the rip */
+  let creases="";
+  for(let k=0;k<7;k++){
+    const [t,rr]=rimPts[Math.floor(r()*N)], len=16+r()*30, bend=(r()-.5)*.5;
+    const a=P(t,rr+1), m=P(t+bend*.3,rr+len*.55), b=P(t+bend,rr+len);
+    const d=`M${a[0].toFixed(1)} ${a[1].toFixed(1)} Q${m[0].toFixed(1)} ${m[1].toFixed(1)} ${b[0].toFixed(1)} ${b[1].toFixed(1)}`;
+    creases+=`<path d="${d}" stroke="#fffdf4" stroke-width="2.4" transform="translate(1.4 1)"/><path d="${d}" stroke="${INK}" stroke-width="1.2" opacity=".55"/>`;
+  }
+  /* a peeled flap of paper, hinged on the edge of the hole */
+  const flap=(t,half,L,inside)=>{
+    const h1=P(t-half,baseR(t-half)), h2=P(t+half,baseR(t+half));
+    const mx=(h1[0]+h2[0])/2, my=(h1[1]+h2[1])/2, ux0=h2[0]-h1[0], uy0=h2[1]-h1[1], hl=Math.hypot(ux0,uy0)/2;
+    const ux=ux0/(2*hl), uy=uy0/(2*hl);
+    let nx=uy, ny=-ux; if((mx-TCX)*nx+(my-TCY-OY)*ny<0){nx=-nx;ny=-ny;}
+    if(inside){nx=-nx;ny=-ny;} else {ny+=.55; const n=Math.hypot(nx,ny); nx/=n; ny/=n;}
+    const j=()=>(r()-.5)*5;
+    const pts=[[-hl,0],[-hl*.97+j(),L*.22],[-hl*.78+j(),L*.5],[-hl*.4+j(),L*.8],[j()*.6,L],[hl*.38+j(),L*.78],[hl*.8+j(),L*.48],[hl*.97+j(),L*.2],[hl,0]];
+    const ser=[]; pts.forEach((q,k)=>{ser.push(q); if(k<pts.length-1&&k>0){const n=pts[k+1]; ser.push([(q[0]+n[0])/2+(r()-.5)*3.5,(q[1]+n[1])/2+(r()-.5)*3.5]);}});
+    const fill=inside?`url(#${id}fi)`:`url(#${id}fo)`;
+    return `<g transform="matrix(${ux.toFixed(3)} ${uy.toFixed(3)} ${nx.toFixed(3)} ${ny.toFixed(3)} ${mx.toFixed(1)} ${my.toFixed(1)})"><g class="flp" style="transform-box:fill-box;transform-origin:50% 0%">
+      ${inside?"":`<polygon points="${f(ser.map(([x,y])=>[x+2,y+6]))}" fill="#080a1c" opacity=".42"/>`}
+      <polygon points="${f(ser)}" fill="${fill}" stroke="${INK}" stroke-width="2" stroke-linejoin="round"/>
+      <path d="M${(-hl*.85).toFixed(1)} ${(L*.13).toFixed(1)} Q0 ${(L*.2).toFixed(1)} ${(hl*.85).toFixed(1)} ${(L*.11).toFixed(1)}" fill="none" stroke="#fff" stroke-width="1.4" opacity=".75"/>
+      <path d="M${-hl} 0 L${hl} 0" stroke="${INK}" stroke-width="1.8"/></g></g>`;
+  };
+  const side=r()<.5?Math.PI+.15+r()*.2:-.15-r()*.2;
+  const flaps=flap(Math.PI/2+.42+r()*.15,.26+r()*.06,40+r()*14,false)+flap(Math.PI/2-.42-r()*.15,.24+r()*.06,38+r()*14,false)+flap(side,.22+r()*.05,32+r()*12,false);
+  const inner=flap(-Math.PI/2+(r()-.5)*.3,.42,RY*.55,true);
+  /* the seam left behind once the flaps are pushed back, and three strips of tape */
+  let seam=[]; const top=TCY+OY-RY*.88, bot=TCY+OY+RY*.88;
+  for(let k=0;k<=16;k++){const y=top+(bot-top)*k/16; seam.push([TCX+(k%2?1:-1)*(1.5+r()*4.5)+Math.sin(k*.7+ph[0])*5,y]);}
+  const seamD="M"+seam.map(([x,y])=>x.toFixed(1)+" "+y.toFixed(1)).join(" L");
+  const strip=(cy,rot,len)=>{
+    const hs=26+r()*6, L=len/2, teeth=5;
+    const right=[], left=[];
+    for(let k=0;k<=teeth*2;k++){const y=-hs/2+hs*k/(teeth*2); right.push([L-(k%2?4.5:0),y]); left.push([-L+(k%2?4.5:0),hs/2-hs*k/(teeth*2)]);}
+    const pts=f([...right,...left]);
+    return `<g transform="translate(${(TCX+(r()-.5)*10).toFixed(1)} ${cy.toFixed(1)}) rotate(${rot.toFixed(1)})"><g class="tp" style="transform-box:fill-box;transform-origin:0% 50%;transform:scale(0,1)">
+      <polygon points="${pts}" fill="#000" opacity=".16" transform="translate(2 3)"/>
+      <polygon points="${pts}" fill="#f7edc4" fill-opacity=".86" stroke="${INK}" stroke-width="1.4" stroke-opacity=".85" stroke-linejoin="round"/>
+      <path d="M${(-L*.82).toFixed(1)} ${(-hs/2+5).toFixed(1)} L${(L*.82).toFixed(1)} ${(-hs/2+5).toFixed(1)}" stroke="#fff" stroke-width="2.6" opacity=".6" stroke-linecap="round"/>
+      <path d="M${(-L*.7).toFixed(1)} ${(hs*.12).toFixed(1)} L${(L*.6).toFixed(1)} ${(hs*.12).toFixed(1)}" stroke="#d9cb94" stroke-width="1.2" opacity=".7"/></g></g>`;
+  };
+  const tapes=strip(TCY+OY-RY*.55,-11+(r()-.5)*8,128+r()*24)+strip(TCY+OY+RY*.02,6+(r()-.5)*8,140+r()*24)+strip(TCY+OY+RY*.58,-4+(r()-.5)*8,126+r()*24);
+  return `<svg viewBox="0 0 ${TW} ${TH}" aria-hidden="true"><defs>
+    <radialGradient id="${id}h" cx=".5" cy=".42" r=".6"><stop offset="0" stop-color="#02030a"/><stop offset=".7" stop-color="#0b0d22"/><stop offset="1" stop-color="#1d2142"/></radialGradient>
+    <linearGradient id="${id}fo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a99d7c"/><stop offset=".28" stop-color="#ddd4ba"/><stop offset="1" stop-color="#fbf7e8"/></linearGradient>
+    <linearGradient id="${id}fi" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8f876f"/><stop offset=".45" stop-color="#c9c0a5"/><stop offset="1" stop-color="#ddd5bc"/></linearGradient>
+    <clipPath id="${id}c"><polygon points="${f(hole)}"/></clipPath></defs>
+    <g class="wr" fill="none" stroke-linecap="round">${creases}</g>
+    <g class="open" style="transform-box:fill-box;transform-origin:50% 18%">
+      <polygon points="${f(rim)}" fill="#fffdf4" stroke="${INK}" stroke-width="1.5" stroke-linejoin="round"/>
+      <polygon points="${f(shade)}" fill="#ddd4bb"/>
+      <polygon points="${f(hole)}" fill="url(#${id}h)" stroke="${INK}" stroke-width="1.3" stroke-linejoin="round"/>
+      <g clip-path="url(#${id}c)">${inner}</g>
+    </g>
+    <g class="flaps">${flaps}</g>
+    <g class="seam" style="opacity:0" fill="none" stroke-linejoin="round" stroke-linecap="round"><path d="${seamD}" stroke="#fffdf4" stroke-width="3.2" transform="translate(1.6 0)"/><path d="${seamD}" stroke="${INK}" stroke-width="2"/></g>
+    <g class="tapes">${tapes}</g></svg>`;
+}
 
 /* ---------- Era cities. Same kind of skyline, drawn the way comics looked in that era.
    Modern panels get a dramatic downshot and heavy blacks; older ones flatten out.
@@ -1311,7 +1386,7 @@ reel.innerHTML=`<section class="era e-s" aria-label="Above the city">${TOP.bg}${
 const hero=$("#hero");
 /* Only animate the panels that are on screen */
 if("IntersectionObserver" in window){
-  const io=new IntersectionObserver(es=>es.forEach(e=>e.target.classList.toggle("live",e.isIntersecting)),{root:world,threshold:0});
+  const io=new IntersectionObserver(es=>es.forEach(e=>e.target.classList.toggle("live",e.isIntersecting)),{root:world,rootMargin:"60% 0px",threshold:0});
   reel.querySelectorAll(".era").forEach(e=>io.observe(e));
 } else reel.querySelectorAll(".era").forEach(e=>e.classList.add("live"));
 const WS={cam:0,heroY:0,depth:null,busy:false};
@@ -1338,13 +1413,33 @@ function setHero(g,y){WS.heroY=y; hero.style.transform=heroT(g,y)}
 function landY(g,d){return d<=0?g.hover:g.eras[d].offsetTop+Math.round(g.hw*0.95)}
 function camFor(g,d){return d<=0?0:Math.max(0,Math.min(g.maxCam,g.eras[d].offsetTop-Math.round(g.hh*0.6)))}
 function clearMarks(){
-  reel.querySelectorAll(".hole,.boom,.shard,.impact,.flashb,.whoosh").forEach(n=>n.remove());
+  reel.querySelectorAll(".tear,.boom,.shard,.impact,.flashb,.whoosh").forEach(n=>n.remove());
   reel.querySelectorAll(".era").forEach(e=>e.classList.remove("here","hit"));
 }
-function addHole(g,i,anim){
-  const w=Math.round(g.hw*3.4), h=Math.round(w*74/120), by=g.eras[i].offsetTop;
-  const d=document.createElement("div"); d.className="hole"+(anim?" anim":""); d.innerHTML=HOLE_SVG;
-  Object.assign(d.style,{width:w+"px",height:h+"px",left:(g.X-w/2)+"px",top:(by-h/2+2)+"px"}); reel.appendChild(d);
+function gutterY(g,i){const p=g.eras[i-1]; return Math.round((p.offsetTop+p.offsetHeight+g.eras[i].offsetTop)/2);}
+function addTear(g,i,anim){
+  const w=Math.round(g.hw*3.1), h=Math.round(w*TH/TW), gy=gutterY(g,i);
+  const t=document.createElement("div"); t.className="tear"; t.dataset.y=gy;
+  t.innerHTML=tearSVG(((G?G.idx*7+G.i:0)+1)*7919+i*104729);
+  Object.assign(t.style,{width:w+"px",height:h+"px",left:Math.round(g.X-w*TCX/TW)+"px",top:Math.round(gy-h*TCY/TH)+"px"}); reel.appendChild(t);
+  if(!anim) return;
+  t.animate([{clipPath:"inset(0% 38% 64% 38%)"},{clipPath:"inset(0% 0% 0% 0%)"}],{duration:250,easing:"cubic-bezier(.2,.9,.3,1)"});
+  const op=t.querySelector(".open");
+  op.animate([{transform:"scale(.3,.5)"},{transform:"scale(1.05,1.03)",offset:.7},{transform:"scale(1,1)"}],{duration:300,easing:"cubic-bezier(.2,.9,.3,1)"});
+  t.querySelectorAll(".flp").forEach((f,k)=>f.animate([{transform:"scaleY(0)"},{transform:"scaleY(1.14)",offset:.7},{transform:"scaleY(1)"}],{duration:340,delay:60+k*45,easing:"cubic-bezier(.2,.9,.3,1)",fill:"backwards"}));
+  t.querySelector(".wr").animate([{opacity:0},{opacity:1}],{duration:220,delay:120,fill:"backwards"});
+}
+/* Fold the flaps back, close the rip to a seam, and tape it shut */
+function tapeUp(t){
+  if(!t.isConnected||t.dataset.taped) return; t.dataset.taped="1";
+  const o={fill:"forwards"};
+  t.querySelectorAll(".flaps .flp").forEach(f=>f.animate([{transform:"scaleY(1)"},{transform:"scaleY(0)"}],{duration:110,easing:"ease-in",...o}));
+  t.querySelector(".open").animate([{transform:"scale(1,1)",opacity:1},{transform:"scale(.05,.94)",opacity:0}],{duration:160,delay:30,easing:"cubic-bezier(.5,0,.8,.6)",...o});
+  t.querySelector(".seam").animate([{opacity:0},{opacity:1}],{duration:90,delay:110,...o});
+  t.querySelectorAll(".tp").forEach((f,k)=>{
+    f.animate([{transform:"scale(0,1)"},{transform:"scale(1.04,1.2)",offset:.72},{transform:"scale(1,1)"}],{duration:170,delay:120+k*75,easing:"cubic-bezier(.2,.8,.3,1)",...o});
+    setTimeout(()=>SND.tape(k),120+k*75);
+  });
 }
 const IMPACT_SVG=(()=>{let l="";for(let k=0;k<16;k++){const a=k*Math.PI/8+(k%2?0.12:0), r0=k%2?36:30, r1=k%2?52:58;
   l+=`M${(Math.cos(a)*r0).toFixed(1)} ${(Math.sin(a)*r0).toFixed(1)} L${(Math.cos(a)*r1).toFixed(1)} ${(Math.sin(a)*r1).toFixed(1)} `;}
@@ -1375,11 +1470,13 @@ function addBurst(g,by,word,stay){
   if(!stay) setTimeout(()=>b.remove(),900);
 }
 function addShards(g,by){
-  for(let s=0;s<10;s++){
-    const sz=8+Math.round(Math.random()*9), sh=document.createElement("div"); sh.className="shard"+(s%3===2?" lite":"");
-    Object.assign(sh.style,{width:sz+"px",height:sz+"px",left:(g.X-sz/2+(Math.random()*g.hw-g.hw/2))+"px",top:(by-sz/2)+"px"}); reel.appendChild(sh);
-    const dx=(s%2?-1:1)*(18+Math.random()*60), dy=-14-Math.random()*44;
-    sh.animate([{transform:"translate(0,0) rotate(0)",opacity:1},{transform:`translate(${dx}px,${dy}px) rotate(${(Math.random()*300-150)|0}deg)`,opacity:1,offset:.6},{transform:`translate(${dx*1.25}px,${dy+40}px) rotate(${(Math.random()*400-200)|0}deg)`,opacity:0}],{duration:760,easing:"ease-out",fill:"forwards"}).finished.then(()=>sh.remove(),()=>{});
+  for(let s=0;s<12;s++){
+    const sz=9+Math.round(Math.random()*11), sh=document.createElement("div"); sh.className="shard";
+    const q=()=>(Math.random()*5).toFixed(1), pts=`${q()},${q()} ${20-q()},${q()*.6} ${20-q()},${20-q()} ${q()*.6},${20-q()}`;
+    sh.innerHTML=`<svg viewBox="0 0 20 20"><polygon points="${pts}" fill="${s%3===2?"#e6dec6":"#fbf8ee"}" stroke="${INK}" stroke-width="1.6" stroke-linejoin="round"/></svg>`;
+    Object.assign(sh.style,{width:sz+"px",height:sz+"px",left:(g.X-sz/2+(Math.random()*g.hw*1.4-g.hw*.7))+"px",top:(by-sz/2)+"px"}); reel.appendChild(sh);
+    const dx=(s%2?-1:1)*(20+Math.random()*70), dy=-18-Math.random()*50, spin=(Math.random()*500-250)|0;
+    sh.animate([{transform:"translate(0,0) rotate(0)",opacity:1},{transform:`translate(${dx}px,${dy}px) rotate(${spin*.5}deg)`,opacity:1,offset:.45},{transform:`translate(${dx*1.4}px,${dy+90}px) rotate(${spin}deg)`,opacity:0}],{duration:1000,easing:"ease-out",fill:"forwards"}).finished.then(()=>sh.remove(),()=>{});
   }
 }
 function land(g,d,withBurst){
@@ -1390,7 +1487,7 @@ const HOVER_CLS="hero up pose-h hovering";
 function finalState(d){
   const g=geo(); clearMarks(); hero.className=HOVER_CLS;
   if(d<=0){ setHero(g,g.hover); setCam(0); return; }
-  for(let i=1;i<=d;i++) addHole(g,i,false);
+  for(let i=1;i<=d;i++) addTear(g,i,false);
   setHero(g,landY(g,d)); setCam(camFor(g,d)); land(g,d,true);
 }
 function resetWorld(){
@@ -1399,6 +1496,7 @@ function resetWorld(){
 
 async function dive(d){
   WS.busy=true; WS.depth=d;
+  reel.querySelectorAll(".tear.fade").forEach(n=>n.remove());
   const g=geo();
   if(d<=0){ hero.className=HOVER_CLS; WS.busy=false; return; }
   if(reduceMotion()){ finalState(d); WS.busy=false; return; }
@@ -1422,7 +1520,7 @@ async function dive(d){
     const by=g.eras[i].offsetTop, toY=by-g.hh+Math.round(g.hh*0.22);
     const dur=Math.max(460,Math.min(820,(toY-y)*1.0))*Math.max(0.82,1-(i-1)*0.05);
     if(!await seg(toY,follow(toY),dur,"cubic-bezier(.5,0,1,1)")) break;
-    addHole(g,i,true); addImpact(g,by); addBurst(g,by,SFX[i-1],false); addShards(g,by); shakeWorld(3+i*1.2); SND.impact(i);
+    addTear(g,i,true); addImpact(g,by); addBurst(g,by,SFX[i-1],false); addShards(g,by); shakeWorld(3+i*1.2); SND.impact(i); SND.rip(i);
     await sleep(210);
     if(G.skip) break;
   }
@@ -1440,6 +1538,13 @@ async function dive(d){
   WS.busy=false;
 }
 
+function bezier(x1,y1,x2,y2){
+  const cx=3*x1,bx=3*(x2-x1)-cx,ax=1-cx-bx, cy=3*y1,by=3*(y2-y1)-cy,ay=1-cy-by;
+  const X=s=>((ax*s+bx)*s+cx)*s, Y=s=>((ay*s+by)*s+cy)*s;
+  const inv=(F,v)=>{let lo=0,hi=1; for(let k=0;k<32;k++){const m=(lo+hi)/2; if(F(m)<v) lo=m; else hi=m;} return (lo+hi)/2;};
+  return {timeFor:v=>X(inv(Y,v))};
+}
+const RISE_EASE=[.55,0,.35,1];
 async function rise(){
   const g=geo();
   reel.querySelectorAll(".boom,.whoosh").forEach(n=>n.remove());
@@ -1447,11 +1552,21 @@ async function rise(){
   hero.className="hero up";                          /* fists up, fly */
   await sleep(240);
   addWhoosh(g,WS.heroY-g.hh*0.2,"ZOOM!"); SND.rise();
-  const dur=Math.min(1200,620+WS.cam*0.12);
-  const a1=hero.animate([{transform:heroT(g,WS.heroY)},{transform:heroT(g,g.hover)}],{duration:dur,easing:"cubic-bezier(.6,0,.3,1)",fill:"forwards"});
-  const a2=reel.animate([{transform:`translateY(${-WS.cam}px)`},{transform:"translateY(0)"}],{duration:dur,easing:"cubic-bezier(.6,0,.3,1)",fill:"forwards"});
+  const tears=[...reel.querySelectorAll(".tear")], y0=WS.heroY, y1=g.hover;
+  const dur=Math.min(3000,900+tears.length*360), E=bezier(...RISE_EASE), ease=`cubic-bezier(${RISE_EASE.join(",")})`;
+  const a1=hero.animate([{transform:heroT(g,y0)},{transform:heroT(g,y1)}],{duration:dur,easing:ease,fill:"forwards"});
+  const a2=reel.animate([{transform:`translateY(${-WS.cam}px)`},{transform:"translateY(0)"}],{duration:dur,easing:ease,fill:"forwards"});
+  /* tape each rip once the hero's feet have cleared it */
+  const timers=tears.map(t=>{const v=(y0-(+t.dataset.y-g.hh*0.9))/(y0-y1);
+    return setTimeout(()=>tapeUp(t),v<=0?0:v>=1?dur:E.timeFor(v)*dur);});
   try{ await Promise.all([a1.finished,a2.finished]); }catch(e){}
-  a1.cancel(); a2.cancel(); resetWorld();
+  a1.cancel(); a2.cancel();
+  timers.forEach(clearTimeout); tears.forEach(tapeUp);
+  /* back on top. The taped rip at the bottom edge fades as the next prompt starts. */
+  reel.querySelectorAll(".boom,.shard,.impact,.flashb,.whoosh").forEach(n=>n.remove());
+  reel.querySelectorAll(".era").forEach(e=>e.classList.remove("here","hit"));
+  hero.className=HOVER_CLS; setHero(g,g.hover); setCam(0); WS.depth=null;
+  setTimeout(()=>{ tears.forEach(t=>t.classList.add("fade")); setTimeout(()=>tears.forEach(t=>t.remove()),450); },700);
 }
 
 let rzT=null;
