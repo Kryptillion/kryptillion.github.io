@@ -238,14 +238,14 @@ button{cursor:pointer}
 .hero.hovering .wob{animation:breathe 2.4s ease-in-out infinite}
 @keyframes breathe{0%,100%{transform:scale(1,1)}50%{transform:scale(1.02,1.035)}}
 .hero.hovering .cape{animation:capeIdle 2.8s ease-in-out infinite}
-@keyframes capeIdle{0%,100%{transform:skewX(0deg) scale(1,1)}25%{transform:skewX(4deg) scale(1.04,1.02)}50%{transform:skewX(0deg) scale(1.08,.98)}75%{transform:skewX(-4deg) scale(1.04,1.02)}}
+@keyframes capeIdle{0%,100%{transform:skewX(0deg) scale(1,1)}25%{transform:skewX(2.5deg) scale(1.02,1.015)}50%{transform:skewX(0deg) scale(1.045,1)}75%{transform:skewX(-2.5deg) scale(1.02,1.015)}}
 .hero.hovering .kg{animation:glowk 2.4s ease-in-out infinite}
 .hero.hovering .eg{animation:glowk 3.2s ease-in-out infinite .7s}
 @keyframes glowk{0%,100%{opacity:.25}50%{opacity:1}}
 .hero.falling .wob,.hero.rising .wob{animation:wobble .34s ease-in-out infinite alternate}
 @keyframes wobble{from{transform:rotate(-5deg) scale(.95,1.08)}to{transform:rotate(5deg) scale(.95,1.08)}}
 .hero.falling .cape,.hero.rising .cape{animation:capeFlap .18s ease-in-out infinite alternate}
-@keyframes capeFlap{from{transform:skewX(-8deg) scale(.95,1.06)}to{transform:skewX(8deg) scale(1.06,1.14)}}
+@keyframes capeFlap{from{transform:skewX(-4.5deg) scale(.98,1.04)}to{transform:skewX(4.5deg) scale(1.04,1.09)}}
 .hero.falling .kg,.hero.rising .kg,.hero.falling .eg,.hero.rising .eg{opacity:.95}
 /* speed lines trail behind the hero while he dives or climbs */
 .hero .trail{position:absolute;left:8%;right:8%;height:150%;opacity:0;transition:opacity .15s}
