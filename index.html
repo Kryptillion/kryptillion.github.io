@@ -329,8 +329,8 @@ button{cursor:pointer}
 .tear.open .page,.tear.cracked .crack{opacity:1}
 .tear.fade{opacity:0}
 .tear svg,.boom svg,.impact svg,.shard svg{display:block;width:100%;height:100%;overflow:visible}
-.impact{z-index:6;animation:impact .5s ease-out forwards}
-@keyframes impact{0%{transform:scale(.35);opacity:1}100%{transform:scale(1.35);opacity:0}}
+.impact{z-index:5;animation:impact .48s cubic-bezier(.15,.8,.3,1) forwards}.impact .f{opacity:0}.impact .f1{animation:if1 .48s steps(1) forwards}.impact .f2{animation:if2 .48s steps(1) forwards}.impact .f3{animation:if3 .48s steps(1) forwards}@keyframes if1{0%{opacity:1}24%{opacity:0}}@keyframes if2{0%{opacity:0}24%{opacity:1}58%{opacity:0}}@keyframes if3{0%{opacity:0}58%{opacity:1}}
+@keyframes impact{0%{transform:scale(.7);opacity:1}80%{opacity:1}100%{transform:scale(1.2);opacity:0}}
 .flashb{z-index:5;border-radius:50%;background:radial-gradient(circle,#fff 0,#fff 32%,rgba(255,255,255,0) 70%);animation:flashb .32s ease-out forwards}
 @keyframes flashb{0%{transform:scale(.2);opacity:1}100%{transform:scale(1.7);opacity:0}}
 .whoosh{
@@ -1178,16 +1178,36 @@ function tapeUp(t){
     setTimeout(()=>SND.tape(k),240+k*75);
   });
 }
-const IMPACT_SVG=(()=>{let l="";for(let k=0;k<16;k++){const a=k*Math.PI/8+(k%2?0.12:0), r0=k%2?36:30, r1=k%2?52:58;
-  l+=`M${(Math.cos(a)*r0).toFixed(1)} ${(Math.sin(a)*r0).toFixed(1)} L${(Math.cos(a)*r1).toFixed(1)} ${(Math.sin(a)*r1).toFixed(1)} `;}
-  return `<svg viewBox="-60 -60 120 120" aria-hidden="true"><path d="${l}" stroke="#fff" stroke-width="6" stroke-linecap="round"/><path d="${l}" stroke="${INK}" stroke-width="3" stroke-linecap="round"/></svg>`;})();
+/* comic impact: a jagged inked starburst that cracks apart into flying splinters, drawn as three quick stepped frames */
+function impactSVG(){
+  const R=Math.random, P=(a,r,sq)=>[(Math.cos(a)*r).toFixed(1),(Math.sin(a)*r*sq).toFixed(1)];
+  const n=9+(R()*3|0), off=R()*6.28, sq=.52; let star="", core="", f2="", f3="", dots2="", dots3="";
+  for(let k=0;k<n;k++){
+    const a=off+k*6.2832/n, aj=a+(R()-.5)*.3, ro=62+R()*26, ri=32+R()*8, am=a+3.1416/n;
+    star+=P(aj,ro,sq).join(",")+" "+P(am,ri,sq).join(",")+" ";
+    core+=P(aj,ro*.5,sq).join(",")+" "+P(am,ri*.5,sq).join(",")+" ";
+    /* frame 2: the burst shatters, each spike flying off as a chunky shard that twists a little */
+    const w=.16+R()*.12, r0=46+R()*10, r1=r0+28+R()*26, tw=(R()-.5)*.35;
+    f2+=`<polygon points="${P(aj-w,r0,sq)} ${P(aj+tw,r1,sq)} ${P(aj+w,r0+4,sq)}"/>`;
+    /* frame 3: smaller chips further out */
+    if(R()<.7){ const r2=r1+12+R()*14, w2=w*.55, tw2=(R()-.5)*.6;
+      f3+=`<polygon points="${P(aj-w2,r2,sq)} ${P(aj+tw2,r2+12+R()*10,sq)} ${P(aj+w2,r2+3,sq)}"/>`; }
+  }
+  for(let k=0;k<7;k++){ const [x,y]=P(R()*6.28,58+R()*30,sq); dots2+=`<circle cx="${x}" cy="${y}" r="${(2.4+R()*3.2).toFixed(1)}"/>`; }
+  for(let k=0;k<8;k++){ const [x,y]=P(R()*6.28,80+R()*30,sq); dots3+=`<circle cx="${x}" cy="${y}" r="${(1.6+R()*2.6).toFixed(1)}"/>`; }
+  const ink=`stroke="${INK}" stroke-width="3.2" stroke-linejoin="round"`;
+  return `<svg viewBox="-110 -66 220 132" aria-hidden="true">`
+   +`<g class="f f1"><polygon points="${star}" fill="#fff" ${ink}/><polygon points="${core}" fill="#c4ffd2"/></g>`
+   +`<g class="f f2"><g fill="#fff" ${ink}>${f2}</g><g fill="${INK}">${dots2}</g></g>`
+   +`<g class="f f3"><g fill="#fff" ${ink}>${f3}</g><g fill="${INK}">${dots3}</g></g></svg>`;
+}
+/* a few bursts are drawn ahead of time, so a break only has to copy one */
+const IMPACTS=Array.from({length:6},()=>{const d=document.createElement("div");d.className="impact";d.innerHTML=impactSVG();return d;});
 function addImpact(g,by){
-  const s=Math.round(g.hw*3.8), f=Math.round(g.hw*2.6);
-  const im=document.createElement("div"); im.className="impact"; im.innerHTML=IMPACT_SVG;
-  Object.assign(im.style,{width:s+"px",height:s+"px",left:(g.X-s/2)+"px",top:(by-s/2)+"px"}); reel.appendChild(im);
-  const fl=document.createElement("div"); fl.className="flashb";
-  Object.assign(fl.style,{width:f+"px",height:f+"px",left:(g.X-f/2)+"px",top:(by-f/2)+"px"}); reel.appendChild(fl);
-  setTimeout(()=>{im.remove();fl.remove();},560);
+  const w=Math.round(g.hw*4.4), h=Math.round(w*0.6);
+  const im=IMPACTS[(IMPACTS.k=(IMPACTS.k||0)+1)%IMPACTS.length].cloneNode(true);
+  Object.assign(im.style,{width:w+"px",height:h+"px",left:(g.X-w/2)+"px",top:(by-h/2)+"px"}); reel.appendChild(im);
+  setTimeout(()=>im.remove(),560);
 }
 function addWhoosh(g,y,word){
   const w=document.createElement("div"); w.className="whoosh"; w.textContent=word; reel.appendChild(w);
